@@ -1,17 +1,17 @@
-import * as z from "zod";
+import * as z from 'zod';
 
 export const WorkflowNodeType = z.enum([
-  "start",
-  "command",
-  "gitClone",
-  "install",
-  "sshKey",
-  "verify",
-  "wait",
-  "env",
-  "prompt",
-  "if",
-  "end",
+  'start',
+  'command',
+  'gitClone',
+  'install',
+  'sshKey',
+  'verify',
+  'wait',
+  'env',
+  'prompt',
+  'if',
+  'end',
 ]);
 export type WorkflowNodeType = z.infer<typeof WorkflowNodeType>;
 
@@ -27,21 +27,21 @@ const executableNode = baseNode.extend({
 });
 
 export const startNodeSchema = baseNode.extend({
-  type: z.literal("start"),
+  type: z.literal('start'),
   data: z.object({ label: z.string() }),
 });
 
 export const commandNodeSchema = executableNode.extend({
-  type: z.literal("command"),
+  type: z.literal('command'),
   data: z.object({
     label: z.string(),
     command: z.string(),
-    platform: z.enum(["mac", "linux", "windows", "all"]).default("all"),
+    platform: z.enum(['mac', 'linux', 'windows', 'all']).default('all'),
   }),
 });
 
 export const gitCloneNodeSchema = executableNode.extend({
-  type: z.literal("gitClone"),
+  type: z.literal('gitClone'),
   data: z.object({
     label: z.string(),
     repoUrl: z.string().url(),
@@ -53,17 +53,17 @@ export const gitCloneNodeSchema = executableNode.extend({
 // brew casks (GUI apps like VS Code), vscode extensions, and
 // fully custom per-OS install commands (e.g. Caddy)
 export const installNodeSchema = executableNode.extend({
-  type: z.literal("install"),
+  type: z.literal('install'),
   data: z.object({
     label: z.string(),
     packageManager: z.enum([
-      "npm",
-      "bun",
-      "brew",
-      "apt",
-      "cask", // brew --cask, for GUI apps like VS Code
-      "vscode-extension", // code --install-extension
-      "custom", // arbitrary shell command, used when nothing else fits
+      'npm',
+      'bun',
+      'brew',
+      'apt',
+      'cask', // brew --cask, for GUI apps like VS Code
+      'vscode-extension', // code --install-extension
+      'custom', // arbitrary shell command, used when nothing else fits
     ]),
     packages: z.array(z.string()).default([]), // package names / extension ids
     customCommand: z.string().optional(), // required when packageManager === "custom"
@@ -71,18 +71,18 @@ export const installNodeSchema = executableNode.extend({
 });
 
 export const sshKeyNodeSchema = executableNode.extend({
-  type: z.literal("sshKey"),
+  type: z.literal('sshKey'),
   data: z.object({
     label: z.string(),
     email: z.string().email(),
-    keyType: z.enum(["ed25519", "rsa"]).default("ed25519"),
+    keyType: z.enum(['ed25519', 'rsa']).default('ed25519'),
   }),
 });
 
 // runs a command after a step and checks it against an expected exit code —
 // catches silent failures (e.g. "docker --version" should exit 0)
 export const verifyNodeSchema = baseNode.extend({
-  type: z.literal("verify"),
+  type: z.literal('verify'),
   data: z.object({
     label: z.string(),
     command: z.string(),
@@ -92,12 +92,12 @@ export const verifyNodeSchema = baseNode.extend({
 });
 
 export const waitNodeSchema = baseNode.extend({
-  type: z.literal("wait"),
+  type: z.literal('wait'),
   data: z.object({ label: z.string(), seconds: z.number() }),
 });
 
 export const envNodeSchema = baseNode.extend({
-  type: z.literal("env"),
+  type: z.literal('env'),
   data: z.object({
     label: z.string(),
     key: z.string(),
@@ -106,7 +106,7 @@ export const envNodeSchema = baseNode.extend({
 });
 
 export const promptNodeSchema = baseNode.extend({
-  type: z.literal("prompt"),
+  type: z.literal('prompt'),
   data: z.object({
     label: z.string(),
     question: z.string(),
@@ -115,7 +115,7 @@ export const promptNodeSchema = baseNode.extend({
 });
 
 export const ifNodeSchema = baseNode.extend({
-  type: z.literal("if"),
+  type: z.literal('if'),
   data: z.object({
     label: z.string(),
     condition: z.string(), // e.g. "node --version"
@@ -123,11 +123,11 @@ export const ifNodeSchema = baseNode.extend({
 });
 
 export const endNodeSchema = baseNode.extend({
-  type: z.literal("end"),
+  type: z.literal('end'),
   data: z.object({ label: z.string() }),
 });
 
-export const flowNodeSchema = z.discriminatedUnion("type", [
+export const flowNodeSchema = z.discriminatedUnion('type', [
   startNodeSchema,
   commandNodeSchema,
   gitCloneNodeSchema,
@@ -146,7 +146,7 @@ export const flowEdgeSchema = z.object({
   id: z.string(),
   source: z.string(),
   target: z.string(),
-  condition: z.enum(["always", "on-success", "on-failure"]).default("always"),
+  condition: z.enum(['always', 'on-success', 'on-failure']).default('always'),
 });
 export type FlowEdge = z.infer<typeof flowEdgeSchema>;
 
@@ -173,8 +173,6 @@ export const workflowListInputSchema = z.object({
   search: z.string().optional(),
 });
 
-export const workflowSaveInputSchema = workflowSchema
-  .omit({ id: true })
-  .extend({
-    id: z.string().optional(), // absent = create new, present = update
-  });
+export const workflowSaveInputSchema = workflowSchema.omit({ id: true }).extend({
+  id: z.string().optional(), // absent = create new, present = update
+});

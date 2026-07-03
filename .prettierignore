@@ -1,0 +1,8 @@
+node_modules
+.next
+dist
+.turbo
+bun.lock
+*.md
+apps/*/node_modules
+packages/*/node_modules
