@@ -1,44 +1,34 @@
 'use client';
 
-import { FolderKanban, LogIn, LogOut, Plus, Workflow } from 'lucide-react';
+import { FolderKanban, Plus, Workflow } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
-import { Button } from '@/components/ui/button';
-import { authClient } from '@/lib/auth-client';
-import { loginHref } from '@/lib/navigation';
+import { UserMenu } from '@/components/user-menu';
 import { cn } from '@/lib/utils';
 
 export function AppNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const session = authClient.useSession();
-  const user = session.data?.user;
-
-  async function signOut() {
-    await authClient.signOut();
-    router.refresh();
-  }
 
   const links = [
     { href: '/workflows', label: 'Workflows', icon: FolderKanban },
-    { href: '/builder', label: 'Builder', icon: Plus },
+    { href: '/builder', label: 'New', icon: Plus },
   ] as const;
 
   return (
-    <header className="blueprint-panel sticky top-0 z-40 border-b px-4 py-3">
-      <div className="mx-auto flex max-w-5xl items-center gap-4">
+    <header className="blueprint-panel sticky top-0 z-40 border-b px-4 py-2">
+      <div className="mx-auto flex max-w-5xl items-center gap-3">
         <Link
           href="/"
-          className="text-primary font-heading inline-flex items-center gap-2 text-base font-bold tracking-tight hover:opacity-90"
+          className="text-primary font-heading inline-flex items-center gap-2 text-sm font-bold tracking-tight hover:opacity-90"
         >
-          <span className="bg-primary/15 inline-flex size-7 items-center justify-center rounded-lg">
-            <Workflow className="size-3.5" />
+          <span className="bg-primary/15 inline-flex size-6 items-center justify-center rounded-md">
+            <Workflow className="size-3" />
           </span>
           DevFlow
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0.5">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
@@ -46,7 +36,7 @@ export function AppNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors',
                   active
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-surface-elevated hover:text-foreground',
@@ -59,31 +49,8 @@ export function AppNav() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          {user ? (
-            <>
-              <span className="text-muted-foreground hidden max-w-[180px] truncate text-xs sm:inline">
-                {user.email}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="rounded-xl"
-                onClick={() => void signOut()}
-              >
-                <LogOut data-icon="inline-start" />
-                Sign out
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" size="sm" asChild className="rounded-xl">
-              <Link href={loginHref(pathname)}>
-                <LogIn data-icon="inline-start" />
-                Sign in
-              </Link>
-            </Button>
-          )}
+        <div className="ml-auto">
+          <UserMenu />
         </div>
       </div>
     </header>

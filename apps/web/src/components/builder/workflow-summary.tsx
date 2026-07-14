@@ -197,18 +197,18 @@ export function ValidationBadge({ status }: { status: ValidationStatus }) {
   const config =
     status === 'valid'
       ? {
-          label: '✓ Valid',
+          label: 'Valid',
           icon: Check,
           className: 'border-success/25 bg-success/10 text-success',
         }
       : status === 'warnings'
         ? {
-            label: '⚠ Warnings',
+            label: 'Warnings',
             icon: CircleAlert,
             className: 'border-warning/25 bg-warning/10 text-warning',
           }
         : {
-            label: '✕ Invalid',
+            label: 'Invalid',
             icon: X,
             className: 'border-destructive/25 bg-destructive/10 text-destructive',
           };

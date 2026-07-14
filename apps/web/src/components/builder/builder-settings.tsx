@@ -1,10 +1,16 @@
 'use client';
 
 import { Settings2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { WithTooltip } from '@/components/ui/with-tooltip';
 
 export type BuilderPreferences = {
   showGrid: boolean;
@@ -29,84 +35,54 @@ export function BuilderSettingsPopover({
   value: BuilderPreferences;
   onChange: (next: BuilderPreferences) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointer(event: MouseEvent) {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    }
-    window.addEventListener('mousedown', onPointer);
-    return () => window.removeEventListener('mousedown', onPointer);
-  }, [open]);
-
   const items: {
     key: keyof BuilderPreferences;
     label: string;
     hint?: string;
+    disabled?: boolean;
   }[] = [
     { key: 'showGrid', label: 'Grid visibility' },
     { key: 'snapToGrid', label: 'Snap to grid' },
     { key: 'showMinimap', label: 'Show minimap' },
-    { key: 'compactNodes', label: 'Compact nodes', hint: 'Coming soon' },
-    { key: 'reduceAnimations', label: 'Reduce animations', hint: 'Coming soon' },
+    { key: 'compactNodes', label: 'Compact nodes', hint: 'Soon', disabled: true },
+    { key: 'reduceAnimations', label: 'Reduce animations', hint: 'Soon', disabled: true },
   ];
 
   return (
-    <div className="relative" ref={ref}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="rounded-xl px-2"
-        title="Builder settings"
-        aria-label="Builder settings"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <Settings2 className="size-4" />
-      </Button>
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="Builder preferences"
-          className="border-border bg-popover absolute top-full right-0 z-40 mt-1 w-56 rounded-xl border p-2 shadow-lg"
-        >
-          <p className="text-muted-foreground px-2 py-1 text-[10px] tracking-[0.12em] uppercase">
-            Preferences
-          </p>
-          <ul className="flex flex-col gap-0.5">
-            {items.map((item) => {
-              const checked = value[item.key];
-              const future = item.key === 'compactNodes' || item.key === 'reduceAnimations';
-              return (
-                <li key={item.key}>
-                  <label
-                    className={cn(
-                      'hover:bg-surface-elevated flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs',
-                      future && 'opacity-70',
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      className="accent-primary"
-                      checked={checked}
-                      onChange={(event) =>
-                        onChange({ ...value, [item.key]: event.target.checked })
-                      }
-                    />
-                    <span className="text-foreground flex-1">{item.label}</span>
-                    {item.hint ? (
-                      <span className="text-muted-foreground/60 text-[10px]">{item.hint}</span>
-                    ) : null}
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
-    </div>
+    <DropdownMenu>
+      <WithTooltip label="Settings">
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-lg"
+            aria-label="Builder settings"
+          >
+            <Settings2 className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+      </WithTooltip>
+      <DropdownMenuContent align="end" className="z-[1100] min-w-56">
+        <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-[0.12em] uppercase">
+          Preferences
+        </DropdownMenuLabel>
+        {items.map((item) => (
+          <DropdownMenuCheckboxItem
+            key={item.key}
+            checked={value[item.key]}
+            disabled={item.disabled}
+            onCheckedChange={(checked) =>
+              onChange({ ...value, [item.key]: Boolean(checked) })
+            }
+          >
+            <span className="flex-1">{item.label}</span>
+            {item.hint ? (
+              <span className="text-muted-foreground/60 ml-2 text-[10px]">{item.hint}</span>
+            ) : null}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

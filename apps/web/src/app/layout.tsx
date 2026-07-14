@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist_Mono, Outfit, Syne } from 'next/font/google';
 
 import { QueryProvider } from '@/components/providers/query-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { TRPCReactProvider } from '@/trpc/client';
 
@@ -41,7 +42,9 @@ export default function RootLayout({
     >
       <body className="flex h-full min-h-full flex-col font-sans">
         <QueryProvider>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+          </TRPCReactProvider>
         </QueryProvider>
       </body>
     </html>

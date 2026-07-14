@@ -632,9 +632,6 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
             window.history.replaceState(null, '', '/builder');
           }
         }}
-        onRename={() => {
-          document.getElementById('workflow-name')?.focus();
-        }}
         onDeleteWorkflow={() => {
           if (!workflowId) return;
           if (!window.confirm('Delete this workflow permanently?')) return;

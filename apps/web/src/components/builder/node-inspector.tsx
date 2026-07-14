@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { WithTooltip } from '@/components/ui/with-tooltip';
 import { cn } from '@/lib/utils';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
@@ -148,17 +149,18 @@ export function NodeInspector({
   if (collapsed) {
     return (
       <aside className="blueprint-panel flex w-10 shrink-0 flex-col items-center border-l py-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="rounded-lg"
-          title="Expand inspector"
-          aria-label="Expand inspector"
-          onClick={onToggleCollapsed}
-        >
-          <PanelRightClose className="size-4 rotate-180" />
-        </Button>
+        <WithTooltip label="Expand inspector" side="left">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-lg"
+            aria-label="Expand inspector"
+            onClick={onToggleCollapsed}
+          >
+            <PanelRightClose className="size-4 rotate-180" />
+          </Button>
+        </WithTooltip>
       </aside>
     );
   }
@@ -210,17 +212,18 @@ export function NodeInspector({
           Inspector
         </button>
         <div className="flex-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="mb-1 rounded-lg"
-          title="Collapse inspector"
-          aria-label="Collapse inspector"
-          onClick={onToggleCollapsed}
-        >
-          <PanelRightClose className="size-3.5" />
-        </Button>
+        <WithTooltip label="Collapse inspector" side="left">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="mb-1 rounded-lg"
+            aria-label="Collapse inspector"
+            onClick={onToggleCollapsed}
+          >
+            <PanelRightClose className="size-3.5" />
+          </Button>
+        </WithTooltip>
       </div>
       <AnimatePresence mode="wait">
         {tab === 'summary' || !node ? (
@@ -532,17 +535,19 @@ export function PaletteCollapseButton({
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  const label = collapsed ? 'Expand node palette' : 'Collapse node palette';
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      className="rounded-lg"
-      title={collapsed ? 'Expand node palette' : 'Collapse node palette'}
-      aria-label={collapsed ? 'Expand node palette' : 'Collapse node palette'}
-      onClick={onToggle}
-    >
-      <PanelLeftClose className={collapsed ? 'size-4 rotate-180' : 'size-4'} />
-    </Button>
+    <WithTooltip label={label} side="right">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="rounded-lg"
+        aria-label={label}
+        onClick={onToggle}
+      >
+        <PanelLeftClose className={collapsed ? 'size-4 rotate-180' : 'size-4'} />
+      </Button>
+    </WithTooltip>
   );
 }
