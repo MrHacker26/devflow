@@ -11,7 +11,7 @@ import { useBuilderNodeActions } from '../builder-node-actions';
 import type { MetaField } from '../node-meta';
 import { getNodeBadges } from '../node-badges';
 import { useSimulationNodeId } from '../simulation-context';
-import { getNodeIcon } from './node-icons';
+import { NodeTypeIcon } from './node-icons';
 
 export type NodeCategory =
   | 'flow'
@@ -104,10 +104,7 @@ function NodeHoverMenu({
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) {
-      setMenuPos(null);
-      return;
-    }
+    if (!open) return;
 
     function placeMenu() {
       const rect = buttonRef.current?.getBoundingClientRect();
@@ -120,12 +117,17 @@ function NodeHoverMenu({
 
     placeMenu();
 
+    function closeMenu() {
+      setOpen(false);
+      setMenuPos(null);
+    }
+
     function onPointerDown(event: MouseEvent) {
       const target = event.target as Node;
       if (menuRef.current?.contains(target) || buttonRef.current?.contains(target)) {
         return;
       }
-      setOpen(false);
+      closeMenu();
     }
 
     window.addEventListener('pointerdown', onPointerDown, true);
@@ -157,6 +159,7 @@ function NodeHoverMenu({
               onClick={() => {
                 actions.onEdit(nodeId);
                 setOpen(false);
+                setMenuPos(null);
               }}
             />
             <MenuItem
@@ -165,6 +168,7 @@ function NodeHoverMenu({
               onClick={() => {
                 actions.onCopy(nodeId);
                 setOpen(false);
+                setMenuPos(null);
               }}
             />
             <MenuItem
@@ -174,6 +178,7 @@ function NodeHoverMenu({
               onClick={() => {
                 actions.onDuplicate(nodeId);
                 setOpen(false);
+                setMenuPos(null);
               }}
             />
             {canDelete ? (
@@ -185,6 +190,7 @@ function NodeHoverMenu({
                 onClick={() => {
                   actions.onDelete(nodeId);
                   setOpen(false);
+                  setMenuPos(null);
                 }}
               />
             ) : null}
@@ -208,7 +214,12 @@ function NodeHoverMenu({
         onClick={(event) => {
           event.stopPropagation();
           event.preventDefault();
-          setOpen((value) => !value);
+          if (open) {
+            setOpen(false);
+            setMenuPos(null);
+          } else {
+            setOpen(true);
+          }
         }}
         onPointerDown={(event) => event.stopPropagation()}
         onMouseDown={(event) => event.stopPropagation()}
@@ -278,7 +289,6 @@ export function BaseWorkflowNode({
   selected?: boolean;
   children?: React.ReactNode;
 }) {
-  const Icon = getNodeIcon(type);
   const canDelete = type !== 'start' && type !== 'end';
   const simulationNodeId = useSimulationNodeId();
   const simulating = Boolean(id && simulationNodeId === id);
@@ -305,7 +315,7 @@ export function BaseWorkflowNode({
             nodeIconToneClass(type),
           )}
         >
-          <Icon className="size-3.5" strokeWidth={2.25} />
+          <NodeTypeIcon type={type} className="size-3.5" strokeWidth={2.25} />
         </span>
         <span className="text-muted-foreground/65 min-w-0 flex-1 text-[10px] font-medium tracking-[0.14em] uppercase">
           {nodeTypeLabel(type)}

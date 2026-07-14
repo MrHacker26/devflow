@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
-import { getNodeIcon } from './nodes/node-icons';
+import { NodeTypeIcon } from './nodes/node-icons';
 import type { BuilderEdge, BuilderNode, BuilderNodeData } from './workflow-serialize';
 import type { WorkflowValidation } from './workflow-validation';
 import { WorkflowSummaryPanel } from './workflow-summary';
@@ -117,11 +117,14 @@ export function NodeInspector({
   onFocusNode: (nodeId: string) => void;
 }) {
   const draggingRef = useRef(false);
-  const [tab, setTab] = useState<'summary' | 'inspector'>(node ? 'inspector' : 'summary');
+  const nodeId = node?.id ?? null;
+  const [tab, setTab] = useState<'summary' | 'inspector'>(nodeId ? 'inspector' : 'summary');
+  const [tabNodeId, setTabNodeId] = useState(nodeId);
 
-  useEffect(() => {
-    setTab(node ? 'inspector' : 'summary');
-  }, [node]);
+  if (nodeId !== tabNodeId) {
+    setTabNodeId(nodeId);
+    setTab(nodeId ? 'inspector' : 'summary');
+  }
 
   useEffect(() => {
     function onMove(event: MouseEvent) {
@@ -257,7 +260,6 @@ function InspectorForm({
   onDelete: (nodeId: string) => void;
 }) {
   const type = (node.type ?? 'command') as WorkflowNodeType;
-  const Icon = getNodeIcon(type);
   const patch = (partial: Partial<BuilderNodeData>) => {
     onChange(node.id, { ...node.data, ...partial });
   };
@@ -275,7 +277,7 @@ function InspectorForm({
           <span
             className={`mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${nodeIconToneClass(type)}`}
           >
-            <Icon className="size-4" strokeWidth={2.1} />
+            <NodeTypeIcon type={type} className="size-4" strokeWidth={2.1} />
           </span>
           <div>
             <p className="text-muted-foreground text-[10px] font-medium tracking-[0.12em] uppercase">

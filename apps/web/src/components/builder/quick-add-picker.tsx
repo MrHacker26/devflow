@@ -8,15 +8,13 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
-import { getNodeIcon } from './nodes/node-icons';
+import { NodeTypeIcon } from './nodes/node-icons';
 import { paletteNodeGroups, paletteNodeTypes } from './nodes/node-types';
 
 export function QuickAddPicker({
-  open,
   onClose,
   onSelect,
 }: {
-  open: boolean;
   onClose: () => void;
   onSelect: (type: WorkflowNodeType) => void;
 }) {
@@ -24,16 +22,11 @@ export function QuickAddPicker({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) {
-      setQuery('');
-      return;
-    }
     const id = window.setTimeout(() => inputRef.current?.focus(), 10);
     return () => window.clearTimeout(id);
-  }, [open]);
+  }, []);
 
   useEffect(() => {
-    if (!open) return;
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -42,7 +35,7 @@ export function QuickAddPicker({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [onClose]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -52,8 +45,6 @@ export function QuickAddPicker({
       return label.includes(q) || type.toLowerCase().includes(q);
     });
   }, [query]);
-
-  if (!open) return null;
 
   return (
     <div className="absolute inset-0 z-30 flex items-start justify-center pt-[18vh]">
@@ -84,60 +75,54 @@ export function QuickAddPicker({
           {filtered.length === 0 ? (
             <p className="text-muted-foreground px-3 py-6 text-center text-sm">No matching nodes</p>
           ) : query.trim() ? (
-            filtered.map((type) => {
-              const Icon = getNodeIcon(type);
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => onSelect(type)}
+            filtered.map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => onSelect(type)}
+                className={cn(
+                  'hover:bg-surface-elevated flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm',
+                  'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <span
                   className={cn(
-                    'hover:bg-surface-elevated flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm',
-                    'text-muted-foreground hover:text-foreground',
+                    'inline-flex size-6 items-center justify-center rounded-md',
+                    nodeIconToneClass(type),
                   )}
                 >
-                  <span
-                    className={cn(
-                      'inline-flex size-6 items-center justify-center rounded-md',
-                      nodeIconToneClass(type),
-                    )}
-                  >
-                    <Icon className="size-3.5" />
-                  </span>
-                  {nodeTypeLabel(type)}
-                </button>
-              );
-            })
+                  <NodeTypeIcon type={type} className="size-3.5" />
+                </span>
+                {nodeTypeLabel(type)}
+              </button>
+            ))
           ) : (
             paletteNodeGroups.map((group) => (
               <div key={group.label} className="mb-2">
                 <p className="text-muted-foreground px-2.5 py-1 text-[10px] font-medium tracking-[0.14em] uppercase">
                   {group.label}
                 </p>
-                {group.types.map((type) => {
-                  const Icon = getNodeIcon(type);
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => onSelect(type)}
+                {group.types.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onSelect(type)}
+                    className={cn(
+                      'hover:bg-surface-elevated flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm',
+                      'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'hover:bg-surface-elevated flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm',
-                        'text-muted-foreground hover:text-foreground',
+                        'inline-flex size-6 items-center justify-center rounded-md',
+                        nodeIconToneClass(type),
                       )}
                     >
-                      <span
-                        className={cn(
-                          'inline-flex size-6 items-center justify-center rounded-md',
-                          nodeIconToneClass(type),
-                        )}
-                      >
-                        <Icon className="size-3.5" />
-                      </span>
-                      {nodeTypeLabel(type)}
-                    </button>
-                  );
-                })}
+                      <NodeTypeIcon type={type} className="size-3.5" />
+                    </span>
+                    {nodeTypeLabel(type)}
+                  </button>
+                ))}
               </div>
             ))
           )}

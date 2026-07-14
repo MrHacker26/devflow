@@ -16,7 +16,7 @@ import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
-import { getNodeIcon } from './nodes/node-icons';
+import { NodeTypeIcon } from './nodes/node-icons';
 import { paletteNodeGroups } from './nodes/node-types';
 
 export type CommandPaletteActions = {
@@ -139,9 +139,7 @@ export function CommandPalette({
                 heading={`Add · ${group.label}`}
                 className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:uppercase"
               >
-                {group.types.map((type) => {
-                  const Icon = getNodeIcon(type);
-                  return (
+                {group.types.map((type) => (
                     <Command.Item
                       key={type}
                       value={`add ${nodeTypeLabel(type)} ${type} ${group.label}`}
@@ -157,13 +155,12 @@ export function CommandPalette({
                           nodeIconToneClass(type),
                         )}
                       >
-                        <Icon className="size-3.5" />
+                        <NodeTypeIcon type={type} className="size-3.5" />
                       </span>
                       <span className="flex-1">{nodeTypeLabel(type)}</span>
                       <span className="text-muted-foreground/50 text-[10px]">Add node</span>
                     </Command.Item>
-                  );
-                })}
+                  ))}
               </Command.Group>
             ))}
           </Command.List>

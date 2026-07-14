@@ -13,6 +13,7 @@ import {
   Variable,
   type LucideIcon,
 } from 'lucide-react';
+import { createElement } from 'react';
 
 const nodeIcons: Record<WorkflowNodeType, LucideIcon> = {
   start: CircleDot,
@@ -30,4 +31,16 @@ const nodeIcons: Record<WorkflowNodeType, LucideIcon> = {
 
 export function getNodeIcon(type: WorkflowNodeType): LucideIcon {
   return nodeIcons[type];
+}
+
+export function NodeTypeIcon({
+  type,
+  className,
+  strokeWidth,
+}: {
+  type: WorkflowNodeType;
+  className?: string;
+  strokeWidth?: number;
+}) {
+  return createElement(nodeIcons[type], { className, strokeWidth });
 }

@@ -13,7 +13,7 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import '@xyflow/react/dist/style.css';
 
@@ -112,14 +112,28 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
   const [lastSavedAt, setLastSavedAt] = useState<Date | string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(!initialWorkflowId);
-  const [canvasReady, setCanvasReady] = useState(false);
-  const [baseline, setBaseline] = useState<string | null>(null);
+  const canvasReady = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [baseline, setBaseline] = useState<string | null>(() =>
+    initialWorkflowId
+      ? null
+      : fingerprint({
+          name: 'Untitled workflow',
+          description: '',
+          nodes: initial.nodes,
+          edges: initial.edges,
+        }),
+  );
   const [previewOpen, setPreviewOpen] = useState(false);
   const [quickAdd, setQuickAdd] = useState<{
     open: boolean;
     position: { x: number; y: number };
   }>({ open: false, position: { x: 0, y: 0 } });
-  const [historyTick, setHistoryTick] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useState(320);
   const [savedJustNow, setSavedJustNow] = useState(false);
   const [simStep, setSimStep] = useState<{
@@ -165,55 +179,38 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     edgesRef.current = edges;
   }, [edges]);
 
-  useEffect(() => {
-    setCanvasReady(true);
-  }, []);
-
   const existingQuery = useQuery({
     ...trpc.workflow.getById.queryOptions({ id: initialWorkflowId! }),
     enabled: Boolean(initialWorkflowId),
   });
 
-  useEffect(() => {
-    if (!existingQuery.data || hydrated) return;
-
+  if (existingQuery.data && !hydrated) {
+    const loaded = existingQuery.data;
     const graph = fromSavedWorkflow({
-      nodes: existingQuery.data.nodes,
-      edges: existingQuery.data.edges,
-      layout: existingQuery.data.layout,
+      nodes: loaded.nodes,
+      edges: loaded.edges,
+      layout: loaded.layout,
     });
 
     setNodes(graph.nodes);
     setEdges(graph.edges);
-    setName(existingQuery.data.name);
-    setDescription(existingQuery.data.description ?? '');
-    setWorkflowId(existingQuery.data.id);
-    setVersion(existingQuery.data.version);
-    setLastSavedAt(existingQuery.data.updatedAt);
+    setName(loaded.name);
+    setDescription(loaded.description ?? '');
+    setWorkflowId(loaded.id);
+    setVersion(loaded.version);
+    setLastSavedAt(loaded.updatedAt);
     setBaseline(
       fingerprint({
-        name: existingQuery.data.name,
-        description: existingQuery.data.description ?? '',
+        name: loaded.name,
+        description: loaded.description ?? '',
         nodes: graph.nodes,
         edges: graph.edges,
       }),
     );
-    pastRef.current = [];
-    futureRef.current = [];
+    setCanUndo(false);
+    setCanRedo(false);
     setHydrated(true);
-  }, [existingQuery.data, hydrated, setEdges, setNodes]);
-
-  useEffect(() => {
-    if (initialWorkflowId || baseline !== null) return;
-    setBaseline(
-      fingerprint({
-        name: 'Untitled workflow',
-        description: '',
-        nodes: initial.nodes,
-        edges: initial.edges,
-      }),
-    );
-  }, [baseline, initial.edges, initial.nodes, initialWorkflowId]);
+  }
 
   const isDirty =
     baseline !== null &&
@@ -221,18 +218,19 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
 
   const saveMutation = useMutation(
     trpc.workflow.save.mutationOptions({
-      onSuccess: async (saved) => {
+      onSuccess: async (saved, variables) => {
         setWorkflowId(saved.id);
         setVersion(saved.version);
         setLastSavedAt(saved.updatedAt);
         setSaveError(null);
         setSavedJustNow(true);
         setBaseline(
-          fingerprint({
+          JSON.stringify({
             name: saved.name,
             description: saved.description ?? '',
-            nodes: nodesRef.current,
-            edges: edgesRef.current,
+            nodes: variables.nodes,
+            edges: variables.edges,
+            layout: variables.layout,
           }),
         );
         await queryClient.invalidateQueries(trpc.workflow.list.queryFilter());
@@ -253,10 +251,6 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     return () => window.clearTimeout(timer);
   }, [isDirty, saveMutation.isPending, savedJustNow]);
 
-  useEffect(() => {
-    if (isDirty) setSavedJustNow(false);
-  }, [isDirty]);
-
   const resolvedSaveStatus: SaveStatus = saveMutation.isPending
     ? 'saving'
     : isDirty
@@ -271,7 +265,8 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     pastRef.current.push(cloneSnapshot(nodesRef.current, edgesRef.current));
     if (pastRef.current.length > 50) pastRef.current.shift();
     futureRef.current = [];
-    setHistoryTick((tick) => tick + 1);
+    setCanUndo(pastRef.current.length > 0);
+    setCanRedo(false);
   }, []);
 
   const undo = useCallback(() => {
@@ -280,7 +275,8 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     futureRef.current.push(cloneSnapshot(nodesRef.current, edgesRef.current));
     setNodes(previous.nodes);
     setEdges(previous.edges);
-    setHistoryTick((tick) => tick + 1);
+    setCanUndo(pastRef.current.length > 0);
+    setCanRedo(futureRef.current.length > 0);
   }, [setEdges, setNodes]);
 
   const redo = useCallback(() => {
@@ -289,12 +285,9 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     pastRef.current.push(cloneSnapshot(nodesRef.current, edgesRef.current));
     setNodes(next.nodes);
     setEdges(next.edges);
-    setHistoryTick((tick) => tick + 1);
+    setCanUndo(pastRef.current.length > 0);
+    setCanRedo(futureRef.current.length > 0);
   }, [setEdges, setNodes]);
-
-  const canUndo = pastRef.current.length > 0;
-  const canRedo = futureRef.current.length > 0;
-  void historyTick;
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -857,14 +850,15 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
               Loading canvas…
             </div>
           )}
-          <QuickAddPicker
-            open={quickAdd.open}
-            onClose={() => setQuickAdd((state) => ({ ...state, open: false }))}
-            onSelect={(type) => {
-              addNodeAt(type, quickAdd.position);
-              setQuickAdd((state) => ({ ...state, open: false }));
-            }}
-          />
+          {quickAdd.open ? (
+            <QuickAddPicker
+              onClose={() => setQuickAdd((state) => ({ ...state, open: false }))}
+              onSelect={(type) => {
+                addNodeAt(type, quickAdd.position);
+                setQuickAdd((state) => ({ ...state, open: false }));
+              }}
+            />
+          ) : null}
           <BuilderContextMenu
             open={Boolean(contextMenu)}
             x={contextMenu?.x ?? 0}

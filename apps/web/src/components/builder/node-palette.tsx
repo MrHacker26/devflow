@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { fadeUp, stagger } from '@/lib/motion';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
-import { getNodeIcon } from './nodes/node-icons';
+import { NodeTypeIcon } from './nodes/node-icons';
 import { paletteNodeGroups } from './nodes/node-types';
 
 export function NodePalette({
@@ -85,9 +85,7 @@ export function NodePalette({
                 {group.label}
               </p>
               <div className="flex flex-col gap-0.5">
-                {group.types.map((type) => {
-                  const Icon = getNodeIcon(type);
-                  return (
+                {group.types.map((type) => (
                     <button
                       key={type}
                       type="button"
@@ -103,12 +101,11 @@ export function NodePalette({
                           nodeIconToneClass(type),
                         )}
                       >
-                        <Icon className="size-3.5" strokeWidth={2.1} />
+                        <NodeTypeIcon type={type} className="size-3.5" strokeWidth={2.1} />
                       </span>
                       {nodeTypeLabel(type)}
                     </button>
-                  );
-                })}
+                  ))}
               </div>
             </motion.div>
           ))
