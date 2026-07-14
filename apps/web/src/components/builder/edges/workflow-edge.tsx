@@ -71,6 +71,8 @@ export function WorkflowEdge({
   const activeEdgeId = useSimulationEdgeId();
   const simulating = activeEdgeId === id;
   const emphasized = selected || hovered || simulating;
+  const isAlways = !data?.condition || data.condition === 'always';
+  const showPill = !isAlways || emphasized;
 
   return (
     <>
@@ -108,40 +110,43 @@ export function WorkflowEdge({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       />
-      <EdgeLabelRenderer>
-        <div
-          className="nodrag nopan absolute flex items-center gap-1"
-          style={{
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            pointerEvents: 'all',
-          }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide whitespace-nowrap shadow-[0_4px_12px_-8px_rgb(0_0_0_/_80%)] backdrop-blur-sm transition-opacity',
-              pill.className,
-            )}
+      {showPill ? (
+        <EdgeLabelRenderer>
+          <div
+            className="nodrag nopan absolute flex items-center gap-1"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              pointerEvents: 'all',
+            }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
           >
-            {pill.text}
-          </span>
-          {emphasized && edgeActions ? (
-            <button
-              type="button"
-              title="Delete connection"
-              aria-label="Delete connection"
-              className="border-border bg-surface text-muted-foreground hover:text-destructive inline-flex size-5 items-center justify-center rounded-full border shadow-sm transition-colors"
-              onClick={(event) => {
-                event.stopPropagation();
-                edgeActions.onDeleteEdge(id);
-              }}
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide whitespace-nowrap shadow-[0_4px_12px_-8px_rgb(0_0_0_/_80%)] backdrop-blur-sm',
+                pill.className,
+                isAlways && 'opacity-80',
+              )}
             >
-              <X className="size-3" />
-            </button>
-          ) : null}
-        </div>
-      </EdgeLabelRenderer>
+              {pill.text}
+            </span>
+            {emphasized && edgeActions ? (
+              <button
+                type="button"
+                title="Delete connection"
+                aria-label="Delete connection"
+                className="border-border bg-surface text-muted-foreground hover:text-destructive inline-flex size-5 items-center justify-center rounded-full border shadow-sm transition-colors"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  edgeActions.onDeleteEdge(id);
+                }}
+              >
+                <X className="size-3" />
+              </button>
+            ) : null}
+          </div>
+        </EdgeLabelRenderer>
+      ) : null}
     </>
   );
 }
