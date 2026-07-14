@@ -229,11 +229,58 @@
   border: 1px solid var(--border) !important;
 }
 
-.react-flow__handle {
-  border: 1.5px solid var(--background) !important;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+.react-flow__node {
+  overflow: visible !important;
 }
 
-.react-flow__handle:hover {
-  transform: scale(1.25);
+.react-flow__node-toolbar {
+  z-index: 50 !important;
+  pointer-events: all !important;
+}
+
+.react-flow__handle {
+  border: 1.5px solid var(--background) !important;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.react-flow__handle.workflow-handle {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.react-flow__handle.workflow-handle::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 999px;
+}
+
+.react-flow__handle:hover,
+.react-flow__handle.workflow-handle:hover {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.workflow-edge-selected {
+  stroke: color-mix(in srgb, var(--primary) 75%, transparent) !important;
+}
+
+.workflow-edge-hovered {
+  stroke: color-mix(in srgb, var(--primary) 55%, transparent) !important;
+}
+
+@keyframes workflow-edge-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.react-flow__minimap-mask {
+  fill: rgb(7 13 24 / 72%) !important;
+  stroke: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+  stroke-width: 2px !important;
 }

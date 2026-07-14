@@ -29,16 +29,32 @@ export const workflowNodeTypes = {
   prompt: makeGeneric('prompt'),
 } satisfies NodeTypes;
 
-export const paletteNodeTypes: WorkflowNodeType[] = [
-  'start',
-  'command',
-  'install',
-  'gitClone',
-  'sshKey',
-  'verify',
-  'wait',
-  'env',
-  'prompt',
-  'if',
-  'end',
+export const paletteNodeGroups: {
+  label: string;
+  types: WorkflowNodeType[];
+}[] = [
+  {
+    label: 'Flow',
+    types: ['start', 'end', 'if'],
+  },
+  {
+    label: 'Execution',
+    types: ['command', 'install', 'gitClone'],
+  },
+  {
+    label: 'Environment',
+    types: ['sshKey', 'env'],
+  },
+  {
+    label: 'Validation',
+    types: ['verify'],
+  },
+  {
+    label: 'Interaction',
+    types: ['prompt', 'wait'],
+  },
 ];
+
+export const paletteNodeTypes: WorkflowNodeType[] = paletteNodeGroups.flatMap(
+  (group) => group.types,
+);

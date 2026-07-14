@@ -1,28 +1,49 @@
 'use client';
 
 import type { WorkflowNodeType } from '@devflow/shared';
-import { MousePointerClick, Trash2 } from 'lucide-react';
+import { PanelLeftClose, PanelRightClose, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { match } from 'ts-pattern';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
 import { getNodeIcon } from './nodes/node-icons';
-import type { BuilderNode, BuilderNodeData } from './workflow-serialize';
+import type { BuilderEdge, BuilderNode, BuilderNodeData } from './workflow-serialize';
+import type { WorkflowValidation } from './workflow-validation';
+import { WorkflowSummaryPanel } from './workflow-summary';
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <p className="text-muted-foreground text-[10px] font-medium tracking-[0.14em] uppercase">
+        {title}
+      </p>
+      <div className="flex flex-col gap-3">{children}</div>
+    </section>
+  );
+}
 
 function Field({
   label,
+  description,
   children,
 }: {
   label: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label>{label}</Label>
+      {description ? (
+        <p className="text-muted-foreground/80 -mt-0.5 text-[11px] leading-relaxed">{description}</p>
+      ) : null}
       {children}
     </div>
   );
@@ -36,8 +57,11 @@ function ExecutableFields({
   onChange: (patch: Partial<BuilderNodeData>) => void;
 }) {
   return (
-    <>
-      <Field label="Skip if command exits 0">
+    <Section title="Advanced">
+      <Field
+        label="Skip If Command"
+        description="Skip this node when the command exits 0."
+      >
         <Input
           value={typeof data.skipIfCommand === 'string' ? data.skipIfCommand : ''}
           placeholder="which docker"
@@ -54,34 +78,166 @@ function ExecutableFields({
         />
         Requires sudo
       </label>
-    </>
+    </Section>
   );
 }
+
+const inputClass = 'bg-background/40 rounded-xl';
+const selectClass = 'border-input bg-background/40 h-8 w-full rounded-xl border px-2 text-sm';
 
 export function NodeInspector({
   node,
   onChange,
   onDelete,
+  nodes,
+  edges,
+  version,
+  lastSavedAt,
+  validation,
+  workflowName,
+  width,
+  onWidthChange,
+  collapsed,
+  onToggleCollapsed,
+  onFocusNode,
 }: {
   node: BuilderNode | null;
   onChange: (nodeId: string, data: BuilderNodeData) => void;
   onDelete: (nodeId: string) => void;
+  nodes: BuilderNode[];
+  edges: BuilderEdge[];
+  version: number;
+  lastSavedAt: Date | string | null;
+  validation: WorkflowValidation;
+  workflowName: string;
+  width: number;
+  onWidthChange: (width: number) => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+  onFocusNode: (nodeId: string) => void;
 }) {
+  const draggingRef = useRef(false);
+  const [tab, setTab] = useState<'summary' | 'inspector'>(node ? 'inspector' : 'summary');
+
+  useEffect(() => {
+    setTab(node ? 'inspector' : 'summary');
+  }, [node]);
+
+  useEffect(() => {
+    function onMove(event: MouseEvent) {
+      if (!draggingRef.current) return;
+      const next = Math.min(500, Math.max(320, window.innerWidth - event.clientX));
+      onWidthChange(next);
+    }
+    function onUp() {
+      draggingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [onWidthChange]);
+
+  if (collapsed) {
+    return (
+      <aside className="blueprint-panel flex w-10 shrink-0 flex-col items-center border-l py-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-lg"
+          title="Expand inspector"
+          aria-label="Expand inspector"
+          onClick={onToggleCollapsed}
+        >
+          <PanelRightClose className="size-4 rotate-180" />
+        </Button>
+      </aside>
+    );
+  }
+
   return (
-    <aside className="blueprint-panel flex w-80 shrink-0 flex-col overflow-hidden border-l">
+    <aside
+      className="blueprint-panel relative flex shrink-0 flex-col overflow-hidden border-l transition-[width] duration-200"
+      style={{ width }}
+      aria-label="Inspector panel"
+    >
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize inspector"
+        title="Drag to resize"
+        className="hover:bg-primary/25 absolute top-0 bottom-0 left-0 z-20 w-1.5 cursor-col-resize bg-transparent transition-colors"
+        onMouseDown={(event) => {
+          event.preventDefault();
+          draggingRef.current = true;
+          document.body.style.cursor = 'col-resize';
+          document.body.style.userSelect = 'none';
+        }}
+      />
+      <div className="border-border flex items-center gap-1 border-b px-2 pt-2 pr-2">
+        <button
+          type="button"
+          className={cn(
+            'rounded-t-md px-3 py-1.5 text-xs font-medium transition-colors',
+            tab === 'summary'
+              ? 'text-primary border-primary border-b-2'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+          onClick={() => setTab('summary')}
+        >
+          Summary
+        </button>
+        <button
+          type="button"
+          className={cn(
+            'rounded-t-md px-3 py-1.5 text-xs font-medium transition-colors',
+            tab === 'inspector'
+              ? 'text-primary border-primary border-b-2'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+          onClick={() => setTab('inspector')}
+          disabled={!node}
+          title={node ? 'Node inspector' : 'Select a node to inspect'}
+        >
+          Inspector
+        </button>
+        <div className="flex-1" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="mb-1 rounded-lg"
+          title="Collapse inspector"
+          aria-label="Collapse inspector"
+          onClick={onToggleCollapsed}
+        >
+          <PanelRightClose className="size-3.5" />
+        </Button>
+      </div>
       <AnimatePresence mode="wait">
-        {!node ? (
+        {tab === 'summary' || !node ? (
           <motion.div
-            key="empty"
+            key="summary"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-muted-foreground flex flex-col items-start gap-3 p-5 text-sm leading-relaxed"
+            transition={{ duration: 0.18 }}
+            className="min-h-0 flex-1 overflow-y-auto"
           >
-            <span className="bg-muted inline-flex size-9 items-center justify-center rounded-xl">
-              <MousePointerClick className="size-4" />
-            </span>
-            Select a node on the canvas to edit its settings.
+            <WorkflowSummaryPanel
+              nodes={nodes}
+              edges={edges}
+              version={version}
+              lastSavedAt={lastSavedAt}
+              validation={validation}
+              workflowName={workflowName}
+              onFocusNode={onFocusNode}
+            />
           </motion.div>
         ) : (
           <InspectorForm key={node.id} node={node} onChange={onChange} onDelete={onDelete} />
@@ -108,11 +264,11 @@ function InspectorForm({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 10 }}
+      initial={{ opacity: 0, x: 8 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 6 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col gap-4 overflow-y-auto p-5"
+      exit={{ opacity: 0, x: 4 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2.5">
@@ -133,215 +289,258 @@ function InspectorForm({
         {type !== 'start' && type !== 'end' ? (
           <button
             type="button"
-            className="text-destructive/90 hover:text-destructive inline-flex items-center gap-1 text-xs transition-colors"
+            className="text-destructive/90 hover:text-destructive focus-visible:ring-ring inline-flex items-center gap-1 rounded-md text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
             onClick={() => onDelete(node.id)}
+            title="Delete node (Delete)"
+            aria-label="Delete node"
           >
             <Trash2 className="size-3.5" />
             Delete
+            <span className="text-muted-foreground/60 ml-0.5 font-mono text-[10px]">Del</span>
           </button>
         ) : null}
       </div>
 
-      <Field label="Label">
-        <Input
-          value={node.data.label}
-          onChange={(e) => patch({ label: e.target.value })}
-          className="bg-background/40 rounded-xl"
-        />
-      </Field>
+      <Section title="General">
+        <Field label="Name" description="Shown on the canvas node.">
+          <Input
+            value={node.data.label}
+            onChange={(e) => patch({ label: e.target.value })}
+            className={inputClass}
+          />
+        </Field>
+      </Section>
 
       {match(type)
         .with('command', () => (
           <>
-            <Field label="Command">
-              <Textarea
-                value={String(node.data.command ?? '')}
-                onChange={(e) => patch({ command: e.target.value })}
-                rows={3}
-                className="bg-background/40 rounded-xl"
-              />
-            </Field>
-            <Field label="Platform">
-              <select
-                className="border-input bg-background/40 h-8 w-full rounded-xl border px-2 text-sm"
-                value={String(node.data.platform ?? 'all')}
-                onChange={(e) => patch({ platform: e.target.value })}
-              >
-                <option value="all">All</option>
-                <option value="mac">macOS</option>
-                <option value="linux">Linux</option>
-                <option value="windows">Windows</option>
-              </select>
-            </Field>
+            <Section title="Execution">
+              <Field label="Command" description="Shell command to run.">
+                <Textarea
+                  value={String(node.data.command ?? '')}
+                  onChange={(e) => patch({ command: e.target.value })}
+                  rows={3}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Platform">
+                <select
+                  className={selectClass}
+                  value={String(node.data.platform ?? 'all')}
+                  onChange={(e) => patch({ platform: e.target.value })}
+                >
+                  <option value="all">All</option>
+                  <option value="mac">macOS</option>
+                  <option value="linux">Linux</option>
+                  <option value="windows">Windows</option>
+                </select>
+              </Field>
+            </Section>
             <ExecutableFields data={node.data} onChange={patch} />
           </>
         ))
         .with('install', () => (
           <>
-            <Field label="Package manager">
-              <select
-                className="border-input bg-background/40 h-8 w-full rounded-xl border px-2 text-sm"
-                value={String(node.data.packageManager ?? 'brew')}
-                onChange={(e) => patch({ packageManager: e.target.value })}
-              >
-                {['npm', 'bun', 'brew', 'apt', 'cask', 'vscode-extension', 'custom'].map((pm) => (
-                  <option key={pm} value={pm}>
-                    {pm}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Packages (comma-separated)">
-              <Input
-                value={Array.isArray(node.data.packages) ? node.data.packages.join(', ') : ''}
-                onChange={(e) =>
-                  patch({
-                    packages: e.target.value
-                      .split(',')
-                      .map((p) => p.trim())
-                      .filter(Boolean),
-                  })
-                }
-                className="bg-background/40 rounded-xl"
-              />
-            </Field>
-            {node.data.packageManager === 'custom' ? (
-              <Field label="Custom command">
-                <Textarea
-                  value={String(node.data.customCommand ?? '')}
-                  onChange={(e) => patch({ customCommand: e.target.value })}
-                  className="bg-background/40 rounded-xl"
+            <Section title="Execution">
+              <Field label="Package Manager">
+                <select
+                  className={selectClass}
+                  value={String(node.data.packageManager ?? 'brew')}
+                  onChange={(e) => patch({ packageManager: e.target.value })}
+                >
+                  {['npm', 'bun', 'brew', 'apt', 'cask', 'vscode-extension', 'custom'].map((pm) => (
+                    <option key={pm} value={pm}>
+                      {pm}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Packages" description="Comma-separated package names.">
+                <Input
+                  value={Array.isArray(node.data.packages) ? node.data.packages.join(', ') : ''}
+                  onChange={(e) =>
+                    patch({
+                      packages: e.target.value
+                        .split(',')
+                        .map((p) => p.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  className={inputClass}
                 />
               </Field>
-            ) : null}
+              {node.data.packageManager === 'custom' ? (
+                <Field label="Custom command">
+                  <Textarea
+                    value={String(node.data.customCommand ?? '')}
+                    onChange={(e) => patch({ customCommand: e.target.value })}
+                    className={inputClass}
+                  />
+                </Field>
+              ) : null}
+            </Section>
             <ExecutableFields data={node.data} onChange={patch} />
           </>
         ))
         .with('if', () => (
-          <Field label="Condition command">
-            <Input
-              value={String(node.data.condition ?? '')}
-              onChange={(e) => patch({ condition: e.target.value })}
-              placeholder="command -v node"
-              className="bg-background/40 rounded-xl"
-            />
-          </Field>
+          <Section title="Execution">
+            <Field label="Condition" description="Command that decides success vs failure.">
+              <Input
+                value={String(node.data.condition ?? '')}
+                onChange={(e) => patch({ condition: e.target.value })}
+                placeholder="command -v node"
+                className={inputClass}
+              />
+            </Field>
+          </Section>
         ))
         .with('verify', () => (
-          <>
+          <Section title="Execution">
             <Field label="Command">
               <Input
                 value={String(node.data.command ?? '')}
                 onChange={(e) => patch({ command: e.target.value })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-            <Field label="Expected exit code">
+            <Field label="Expected Exit Code">
               <Input
                 type="number"
                 value={Number(node.data.expectedExitCode ?? 0)}
                 onChange={(e) => patch({ expectedExitCode: Number(e.target.value) })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-            <Field label="Failure message">
+            <Field label="Failure Message" description="Optional message when verification fails.">
               <Input
                 value={String(node.data.failureMessage ?? '')}
                 onChange={(e) => patch({ failureMessage: e.target.value || undefined })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-          </>
+          </Section>
         ))
         .with('gitClone', () => (
           <>
-            <Field label="Repo URL">
-              <Input
-                value={String(node.data.repoUrl ?? '')}
-                onChange={(e) => patch({ repoUrl: e.target.value })}
-                className="bg-background/40 rounded-xl"
-              />
-            </Field>
-            <Field label="Target directory">
-              <Input
-                value={String(node.data.targetDir ?? '')}
-                onChange={(e) => patch({ targetDir: e.target.value || undefined })}
-                className="bg-background/40 rounded-xl"
-              />
-            </Field>
+            <Section title="Execution">
+              <Field label="Repo URL">
+                <Input
+                  value={String(node.data.repoUrl ?? '')}
+                  onChange={(e) => patch({ repoUrl: e.target.value })}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Target Directory">
+                <Input
+                  value={String(node.data.targetDir ?? '')}
+                  onChange={(e) => patch({ targetDir: e.target.value || undefined })}
+                  className={inputClass}
+                />
+              </Field>
+            </Section>
             <ExecutableFields data={node.data} onChange={patch} />
           </>
         ))
         .with('sshKey', () => (
           <>
-            <Field label="Email">
-              <Input
-                value={String(node.data.email ?? '')}
-                onChange={(e) => patch({ email: e.target.value })}
-                className="bg-background/40 rounded-xl"
-              />
-            </Field>
-            <Field label="Key type">
-              <select
-                className="border-input bg-background/40 h-8 w-full rounded-xl border px-2 text-sm"
-                value={String(node.data.keyType ?? 'ed25519')}
-                onChange={(e) => patch({ keyType: e.target.value })}
-              >
-                <option value="ed25519">ed25519</option>
-                <option value="rsa">rsa</option>
-              </select>
-            </Field>
+            <Section title="Execution">
+              <Field label="Email">
+                <Input
+                  value={String(node.data.email ?? '')}
+                  onChange={(e) => patch({ email: e.target.value })}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Key Type">
+                <select
+                  className={selectClass}
+                  value={String(node.data.keyType ?? 'ed25519')}
+                  onChange={(e) => patch({ keyType: e.target.value })}
+                >
+                  <option value="ed25519">ed25519</option>
+                  <option value="rsa">rsa</option>
+                </select>
+              </Field>
+            </Section>
             <ExecutableFields data={node.data} onChange={patch} />
           </>
         ))
         .with('wait', () => (
-          <Field label="Seconds">
-            <Input
-              type="number"
-              value={Number(node.data.seconds ?? 0)}
-              onChange={(e) => patch({ seconds: Number(e.target.value) })}
-              className="bg-background/40 rounded-xl"
-            />
-          </Field>
+          <Section title="Execution">
+            <Field label="Seconds">
+              <Input
+                type="number"
+                value={Number(node.data.seconds ?? 0)}
+                onChange={(e) => patch({ seconds: Number(e.target.value) })}
+                className={inputClass}
+              />
+            </Field>
+          </Section>
         ))
         .with('env', () => (
-          <>
+          <Section title="Execution">
             <Field label="Key">
               <Input
                 value={String(node.data.key ?? '')}
                 onChange={(e) => patch({ key: e.target.value })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-            <Field label="Default value">
+            <Field label="Default Value">
               <Input
                 value={String(node.data.defaultValue ?? '')}
                 onChange={(e) => patch({ defaultValue: e.target.value || undefined })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-          </>
+          </Section>
         ))
         .with('prompt', () => (
-          <>
+          <Section title="Execution">
             <Field label="Question">
               <Input
                 value={String(node.data.question ?? '')}
                 onChange={(e) => patch({ question: e.target.value })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-            <Field label="Variable name">
+            <Field label="Variable Name">
               <Input
                 value={String(node.data.variableName ?? '')}
                 onChange={(e) => patch({ variableName: e.target.value })}
-                className="bg-background/40 rounded-xl"
+                className={inputClass}
               />
             </Field>
-          </>
+          </Section>
         ))
-        .with('start', 'end', () => null)
+        .with('start', 'end', () => (
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Flow terminals have no execution settings.
+          </p>
+        ))
         .exhaustive()}
     </motion.div>
+  );
+}
+
+export function PaletteCollapseButton({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      className="rounded-lg"
+      title={collapsed ? 'Expand node palette' : 'Collapse node palette'}
+      aria-label={collapsed ? 'Expand node palette' : 'Collapse node palette'}
+      onClick={onToggle}
+    >
+      <PanelLeftClose className={collapsed ? 'size-4 rotate-180' : 'size-4'} />
+    </Button>
   );
 }

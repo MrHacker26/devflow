@@ -1,17 +1,21 @@
 'use client';
 
 import {
+  ChevronLeft,
   Check,
-  FolderKanban,
   LoaderCircle,
   LogIn,
   LogOut,
+  MoreHorizontal,
+  Play,
   Save,
+  Sparkles,
   Workflow,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,35 +23,75 @@ import { Label } from '@/components/ui/label';
 import { authClient } from '@/lib/auth-client';
 import { loginHref } from '@/lib/navigation';
 
+import {
+  BuilderSettingsPopover,
+  type BuilderPreferences,
+} from './builder-settings';
+import { ValidationBadge } from './workflow-summary';
+import type { ValidationStatus } from './workflow-validation';
+
+export type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'saved-just-now';
+
 export function BuilderToolbar({
   name,
   description,
   onNameChange,
   onDescriptionChange,
   onSave,
-  isSaving,
+  saveStatus,
   saveError,
-  saveSuccess,
   workflowId,
+  validationStatus,
+  onPreviewExecution,
+  onSimulate,
+  isSimulating,
+  preferences,
+  onPreferencesChange,
+  onExportJson,
+  onDuplicateWorkflow,
+  onRename,
+  onDeleteWorkflow,
+  onOpenShortcuts,
 }: {
   name: string;
   description: string;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onSave: () => void;
-  isSaving: boolean;
+  saveStatus: SaveStatus;
   saveError: string | null;
-  saveSuccess: boolean;
   workflowId: string | null;
+  validationStatus: ValidationStatus;
+  onPreviewExecution: () => void;
+  onSimulate: () => void;
+  isSimulating: boolean;
+  preferences: BuilderPreferences;
+  onPreferencesChange: (next: BuilderPreferences) => void;
+  onExportJson: () => void;
+  onDuplicateWorkflow: () => void;
+  onRename: () => void;
+  onDeleteWorkflow: () => void;
+  onOpenShortcuts: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const session = authClient.useSession();
   const user = session.data?.user;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const returnTo =
-    typeof window !== 'undefined'
-      ? `${pathname}${window.location.search}`
-      : pathname;
+    typeof window !== 'undefined' ? `${pathname}${window.location.search}` : pathname;
+  const isSaving = saveStatus === 'saving';
+  const initials = user?.email?.slice(0, 2).toUpperCase() ?? '?';
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointer(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    }
+    window.addEventListener('mousedown', onPointer);
+    return () => window.removeEventListener('mousedown', onPointer);
+  }, [menuOpen]);
 
   async function signOut() {
     await authClient.signOut();
@@ -55,106 +99,226 @@ export function BuilderToolbar({
   }
 
   return (
-    <motion.header
-      className="blueprint-panel flex flex-wrap items-end gap-3 border-b px-4 py-3"
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <Link
-        href="/workflows"
-        className="text-primary font-heading mb-1 inline-flex items-center gap-2 text-base font-bold tracking-tight hover:opacity-90"
+    <div className="shrink-0">
+      <motion.header
+        className="blueprint-panel flex flex-wrap items-center gap-3 border-b px-4 py-2.5"
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       >
-        <span className="bg-primary/15 inline-flex size-7 items-center justify-center rounded-lg">
-          <Workflow className="size-3.5" />
-        </span>
-        DevFlow
-      </Link>
-
-      <Button variant="ghost" size="sm" asChild className="mb-1 rounded-xl">
-        <Link href="/workflows">
-          <FolderKanban data-icon="inline-start" />
-          Workflows
-        </Link>
-      </Button>
-
-      <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
-        <Label htmlFor="workflow-name" className="text-muted-foreground text-xs">
-          Workflow name
-        </Label>
-        <Input
-          id="workflow-name"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          placeholder="Mac onboarding"
-          className="bg-background/40 h-9 rounded-xl"
-        />
-      </div>
-      <div className="flex min-w-[240px] flex-[2] flex-col gap-1.5">
-        <Label htmlFor="workflow-description" className="text-muted-foreground text-xs">
-          Description
-        </Label>
-        <Input
-          id="workflow-description"
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Optional"
-          className="bg-background/40 h-9 rounded-xl"
-        />
-      </div>
-      <div className="flex items-center gap-2 pb-0.5">
-        {workflowId ? (
-          <motion.span
-            key={workflowId}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-muted-foreground/70 rounded-md bg-black/25 px-2 py-1 font-mono text-[11px]"
+        <div className="flex items-center gap-2">
+          <Link
+            href="/workflows"
+            className="text-primary font-heading inline-flex items-center gap-2 text-base font-bold tracking-tight hover:opacity-90"
           >
-            {workflowId.slice(0, 8)}
-          </motion.span>
-        ) : null}
-        {user ? (
-          <>
-            <span className="text-muted-foreground hidden max-w-[120px] truncate text-xs lg:inline">
-              {user.email}
+            <span className="bg-primary/15 inline-flex size-7 items-center justify-center rounded-lg">
+              <Workflow className="size-3.5" />
             </span>
+            DevFlow
+          </Link>
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground rounded-lg">
+            <Link href="/workflows">
+              <ChevronLeft data-icon="inline-start" className="size-3.5" />
+              Back to Workflows
+            </Link>
+          </Button>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-end gap-3">
+          <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+            <Label htmlFor="workflow-name" className="text-muted-foreground text-[11px]">
+              Workflow name
+            </Label>
+            <Input
+              id="workflow-name"
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Mac onboarding"
+              title={workflowId ? `ID: ${workflowId}` : undefined}
+              className="bg-background/40 h-8 rounded-lg"
+            />
+          </div>
+          <div className="flex min-w-[220px] flex-[1.4] flex-col gap-1">
+            <Label htmlFor="workflow-description" className="text-muted-foreground text-[11px]">
+              Description
+            </Label>
+            <Input
+              id="workflow-description"
+              value={description}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              placeholder="Optional"
+              className="bg-background/40 h-8 rounded-lg"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {user ? (
+            <>
+              <span className="text-muted-foreground hidden max-w-[160px] truncate text-xs md:inline">
+                {user.email}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="rounded-lg"
+                onClick={() => void signOut()}
+              >
+                <LogOut data-icon="inline-start" />
+                Sign out
+              </Button>
+              <span
+                className="bg-primary/15 text-primary inline-flex size-8 items-center justify-center rounded-full text-[11px] font-semibold"
+                title={user.email}
+                aria-label={user.email}
+              >
+                {initials}
+              </span>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" asChild className="rounded-lg">
+              <Link href={loginHref(returnTo)}>
+                <LogIn data-icon="inline-start" />
+                Sign in
+              </Link>
+            </Button>
+          )}
+        </div>
+      </motion.header>
+
+      <div className="border-border bg-surface/40 flex flex-wrap items-center gap-2 border-b px-3 py-1.5">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <ValidationBadge status={validationStatus} />
+          <span
+            className="text-muted-foreground hidden min-w-[6.5rem] items-center gap-1 text-[11px] sm:inline-flex"
+            aria-live="polite"
+          >
+            {saveStatus === 'saving' ? (
+              <>
+                <LoaderCircle className="size-3 animate-spin" />
+                Saving…
+              </>
+            ) : saveStatus === 'unsaved' ? (
+              'Unsaved Changes'
+            ) : saveStatus === 'saved-just-now' ? (
+              <>
+                <Check className="text-success size-3" />
+                Saved just now
+              </>
+            ) : (
+              <>
+                <Check className="text-success size-3" />
+                Saved
+              </>
+            )}
+          </span>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rounded-lg"
+            onClick={onPreviewExecution}
+            title="Preview execution path"
+          >
+            <Play data-icon="inline-start" className="size-3.5" />
+            Preview
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rounded-lg"
+            onClick={onSimulate}
+            disabled={isSimulating}
+            title="Visually simulate execution"
+          >
+            <Sparkles data-icon="inline-start" className="size-3.5" />
+            {isSimulating ? 'Simulating…' : 'Simulate'}
+          </Button>
+
+          <BuilderSettingsPopover value={preferences} onChange={onPreferencesChange} />
+
+          <div className="relative" ref={menuRef}>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="rounded-xl"
-              onClick={() => void signOut()}
+              className="rounded-lg px-2"
+              title="More actions"
+              aria-label="More actions"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
             >
-              <LogOut data-icon="inline-start" />
-              Sign out
+              <MoreHorizontal className="size-4" />
             </Button>
-          </>
-        ) : (
-          <Button variant="outline" size="sm" asChild className="rounded-xl">
-            <Link href={loginHref(returnTo)}>
-              <LogIn data-icon="inline-start" />
-              Sign in
-            </Link>
-          </Button>
-        )}
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            {menuOpen ? (
+              <div
+                role="menu"
+                className="border-border bg-popover absolute top-full right-0 z-40 mt-1 w-56 rounded-xl border p-1.5 shadow-lg"
+              >
+                <MenuAction
+                  label="Export JSON"
+                  onClick={() => {
+                    onExportJson();
+                    setMenuOpen(false);
+                  }}
+                />
+                <MenuAction label="Import JSON" disabled hint="Soon" />
+                <MenuAction
+                  label="Duplicate Workflow"
+                  onClick={() => {
+                    onDuplicateWorkflow();
+                    setMenuOpen(false);
+                  }}
+                />
+                <MenuAction
+                  label="Rename"
+                  onClick={() => {
+                    onRename();
+                    setMenuOpen(false);
+                  }}
+                />
+                <MenuAction
+                  label="Delete"
+                  danger
+                  disabled={!workflowId}
+                  onClick={() => {
+                    onDeleteWorkflow();
+                    setMenuOpen(false);
+                  }}
+                />
+                <div className="border-border my-1 border-t" />
+                <MenuAction
+                  label="Keyboard shortcuts"
+                  hint="?"
+                  onClick={() => {
+                    onOpenShortcuts();
+                    setMenuOpen(false);
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
+
           <Button
             type="button"
             onClick={onSave}
             disabled={isSaving || !name.trim()}
-            className="rounded-xl shadow-[0_0_20px_-8px_color-mix(in_srgb,var(--primary)_50%,transparent)]"
+            title="Save (Ctrl/Cmd+S)"
+            className="rounded-lg"
           >
             {isSaving ? (
               <LoaderCircle data-icon="inline-start" className="animate-spin" />
-            ) : saveSuccess ? (
-              <Check data-icon="inline-start" />
             ) : (
               <Save data-icon="inline-start" />
             )}
-            {isSaving ? 'Saving…' : saveSuccess ? 'Saved' : 'Save'}
+            {isSaving ? 'Saving…' : 'Save'}
           </Button>
-        </motion.div>
+        </div>
       </div>
+
       <AnimatePresence>
         {saveError ? (
           <motion.p
@@ -162,7 +326,7 @@ export function BuilderToolbar({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-destructive w-full text-sm"
+            className="text-destructive border-border border-b px-4 py-2 text-sm"
           >
             {saveError}{' '}
             {!user ? (
@@ -177,7 +341,7 @@ export function BuilderToolbar({
             key="hint"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-muted-foreground w-full text-xs"
+            className="text-muted-foreground border-border border-b px-4 py-1.5 text-xs"
           >
             You’re exploring freely —{' '}
             <Link href={loginHref(returnTo)} className="text-primary hover:underline">
@@ -187,6 +351,39 @@ export function BuilderToolbar({
           </motion.p>
         ) : null}
       </AnimatePresence>
-    </motion.header>
+    </div>
+  );
+}
+
+function MenuAction({
+  label,
+  hint,
+  disabled,
+  danger,
+  onClick,
+}: {
+  label: string;
+  hint?: string;
+  disabled?: boolean;
+  danger?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onClick}
+      className={
+        disabled
+          ? 'text-muted-foreground flex w-full cursor-not-allowed items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs opacity-50'
+          : danger
+            ? 'text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs'
+            : 'text-muted-foreground hover:bg-surface-elevated hover:text-foreground flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs'
+      }
+    >
+      <span className="flex-1">{label}</span>
+      {hint ? <span className="text-muted-foreground/50 font-mono text-[10px]">{hint}</span> : null}
+    </button>
   );
 }

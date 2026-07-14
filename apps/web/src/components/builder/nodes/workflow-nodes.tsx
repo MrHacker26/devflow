@@ -1,7 +1,9 @@
 import type { WorkflowNodeType } from '@devflow/shared';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { type NodeProps } from '@xyflow/react';
 
+import { getNodeMetaFields } from '../node-meta';
 import { BaseWorkflowNode } from './base-node';
+import { NodeHandle, handlePositions } from './node-handle';
 
 type GenericData = {
   label: string;
@@ -11,111 +13,125 @@ type GenericData = {
 };
 
 export function GenericWorkflowNode({
+  id,
   data,
   selected,
   type,
 }: NodeProps & { type: string }) {
   const nodeType = type as WorkflowNodeType;
-  const label = typeof data.label === 'string' ? data.label : nodeType;
+  const d = data as GenericData;
+  const label = typeof d.label === 'string' ? d.label : nodeType;
+  const fields = getNodeMetaFields(nodeType, d);
 
   return (
     <>
       {nodeType !== 'start' ? (
-        <Handle type="target" position={Position.Top} className="!bg-muted-foreground !h-2 !w-2" />
+        <NodeHandle
+          type="target"
+          position={handlePositions.top}
+          className="!bg-muted-foreground"
+        />
       ) : null}
-      <BaseWorkflowNode type={nodeType} label={label} selected={selected} />
+      <BaseWorkflowNode
+        id={id}
+        type={nodeType}
+        label={label}
+        fields={fields}
+        data={d}
+        selected={selected}
+      />
       {nodeType !== 'end' ? (
-        <Handle
+        <NodeHandle
           type="source"
-          position={Position.Bottom}
-          className="!bg-muted-foreground !h-2 !w-2"
+          position={handlePositions.bottom}
+          className="!bg-muted-foreground"
         />
       ) : null}
     </>
   );
 }
 
-export function CommandWorkflowNode({ data, selected }: NodeProps) {
-  const d = data as GenericData & { command?: string };
+export function CommandWorkflowNode({ id, data, selected }: NodeProps) {
+  const d = data as GenericData;
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="target" position={handlePositions.top} className="!bg-muted-foreground" />
       <BaseWorkflowNode
+        id={id}
         type="command"
         label={d.label || 'Command'}
-        subtitle={d.command}
+        fields={getNodeMetaFields('command', d)}
+        data={d}
         selected={selected}
       />
-      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
     </>
   );
 }
 
-export function InstallWorkflowNode({ data, selected }: NodeProps) {
-  const d = data as GenericData & {
-    packageManager?: string;
-    packages?: string[];
-  };
-  const subtitle =
-    d.packageManager === 'custom'
-      ? 'custom'
-      : [d.packageManager, ...(d.packages ?? [])].filter(Boolean).join(' ');
-
+export function InstallWorkflowNode({ id, data, selected }: NodeProps) {
+  const d = data as GenericData;
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="target" position={handlePositions.top} className="!bg-muted-foreground" />
       <BaseWorkflowNode
+        id={id}
         type="install"
         label={d.label || 'Install'}
-        subtitle={subtitle}
+        fields={getNodeMetaFields('install', d)}
+        data={d}
         selected={selected}
       />
-      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
     </>
   );
 }
 
-export function IfWorkflowNode({ data, selected }: NodeProps) {
-  const d = data as GenericData & { condition?: string };
+export function IfWorkflowNode({ id, data, selected }: NodeProps) {
+  const d = data as GenericData;
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="target" position={handlePositions.top} className="!bg-muted-foreground" />
       <BaseWorkflowNode
+        id={id}
         type="if"
         label={d.label || 'If'}
-        subtitle={d.condition}
+        fields={getNodeMetaFields('if', d)}
+        data={d}
         selected={selected}
       />
-      <Handle
+      <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={handlePositions.bottom}
         id="success"
-        className="!bg-success !h-2 !w-2"
+        className="!bg-success"
         style={{ left: '35%' }}
       />
-      <Handle
+      <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={handlePositions.bottom}
         id="failure"
-        className="!bg-destructive !h-2 !w-2"
+        className="!bg-destructive"
         style={{ left: '65%' }}
       />
     </>
   );
 }
 
-export function VerifyWorkflowNode({ data, selected }: NodeProps) {
-  const d = data as GenericData & { command?: string };
+export function VerifyWorkflowNode({ id, data, selected }: NodeProps) {
+  const d = data as GenericData;
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="target" position={handlePositions.top} className="!bg-muted-foreground" />
       <BaseWorkflowNode
+        id={id}
         type="verify"
         label={d.label || 'Verify'}
-        subtitle={d.command}
+        fields={getNodeMetaFields('verify', d)}
+        data={d}
         selected={selected}
       />
-      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !h-2 !w-2" />
+      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
     </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ArrowRight,
+  ChevronRight,
   LoaderCircle,
   LockKeyhole,
   LogIn,
@@ -192,7 +192,7 @@ function LoginForm() {
             className="text-muted-foreground hover:text-primary inline-flex w-full items-center justify-center gap-1 text-xs transition-colors"
           >
             Continue without signing in
-            <ArrowRight className="size-3" />
+            <ChevronRight className="size-3" />
           </Link>
         </motion.div>
       </motion.div>

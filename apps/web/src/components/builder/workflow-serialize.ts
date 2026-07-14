@@ -68,6 +68,7 @@ export function createInitialBuilderGraph(): {
     edges: [
       {
         id: 'start-end',
+        type: 'workflow',
         source: startId,
         target: endId,
         data: { condition: 'always' },
@@ -156,11 +157,11 @@ export function fromSavedWorkflow(input: {
 
     return {
       id: edge.id,
+      type: 'workflow',
       source: edge.source,
       target: edge.target,
       sourceHandle,
       data: { condition: edge.condition },
-      label: edge.condition === 'always' ? undefined : edge.condition,
     };
   });
 
