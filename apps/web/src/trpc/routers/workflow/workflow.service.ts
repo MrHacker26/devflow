@@ -1,18 +1,11 @@
-import type { WorkflowSaveInput } from '@devflow/shared';
-import {
-  workflowListInputSchema,
-  workflowSaveInputSchema,
-} from '@devflow/shared';
+import type { WorkflowListInput, WorkflowSaveInput } from '@devflow/shared';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { match, P } from 'ts-pattern';
 import * as z from 'zod';
 
 import { workflows } from '@/db/schema';
 import { db } from '@/lib/db';
-
-export type WorkflowListInput = z.infer<typeof workflowListInputSchema>;
-export type { WorkflowSaveInput };
 
 const workflowIdSchema = z.object({
   id: z.string().uuid(),
@@ -21,7 +14,7 @@ const workflowIdSchema = z.object({
 export async function listWorkflows(input: WorkflowListInput) {
   const search = input.search?.trim();
 
-  const rows = await db
+  return db
     .select({
       id: workflows.id,
       version: workflows.version,
@@ -40,8 +33,6 @@ export async function listWorkflows(input: WorkflowListInput) {
         : undefined,
     )
     .orderBy(desc(workflows.updatedAt));
-
-  return rows;
 }
 
 export async function getWorkflowById(id: string) {

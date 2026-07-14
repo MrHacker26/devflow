@@ -172,7 +172,9 @@ export type Workflow = z.infer<typeof workflowSchema>;
 export const workflowListInputSchema = z.object({
   search: z.string().optional(),
 });
+export type WorkflowListInput = z.infer<typeof workflowListInputSchema>;
 
 export const workflowSaveInputSchema = workflowSchema.omit({ id: true }).extend({
   id: z.string().optional(), // absent = create new, present = update
 });
+export type WorkflowSaveInput = z.infer<typeof workflowSaveInputSchema>;
