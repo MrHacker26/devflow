@@ -13,9 +13,7 @@ import {
 export const workflowRouter = createTRPCRouter({
   list: publicProcedure.input(workflowListInputSchema).query(({ input }) => listWorkflows(input)),
 
-  getById: publicProcedure
-    .input(workflowIdSchema)
-    .query(({ input }) => getWorkflowById(input.id)),
+  getById: publicProcedure.input(workflowIdSchema).query(({ input }) => getWorkflowById(input.id)),
 
   save: protectedProcedure
     .input(workflowSaveInputSchema)

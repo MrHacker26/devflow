@@ -67,12 +67,11 @@ export function WorkflowsDashboard() {
 
   const workflows = listQuery.data ?? [];
   const isEmpty = !listQuery.isLoading && !listQuery.isError && workflows.length === 0;
-  const totalLabel =
-    listQuery.isLoading
-      ? 'Loading…'
-      : workflows.length === 1
-        ? '1 workflow'
-        : `${workflows.length} workflows`;
+  const totalLabel = listQuery.isLoading
+    ? 'Loading…'
+    : workflows.length === 1
+      ? '1 workflow'
+      : `${workflows.length} workflows`;
 
   return (
     <div className="blueprint-atmosphere relative flex min-h-0 flex-1 flex-col">
@@ -104,7 +103,10 @@ export function WorkflowsDashboard() {
           </motion.div>
 
           <motion.div variants={fadeUp}>
-            <Button asChild className="rounded-xl shadow-[0_0_24px_-8px_color-mix(in_srgb,var(--primary)_45%,transparent)]">
+            <Button
+              asChild
+              className="rounded-xl shadow-[0_0_24px_-8px_color-mix(in_srgb,var(--primary)_45%,transparent)]"
+            >
               <Link href="/builder">
                 <Plus data-icon="inline-start" />
                 New workflow

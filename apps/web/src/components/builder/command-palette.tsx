@@ -2,15 +2,7 @@
 
 import type { WorkflowNodeType } from '@devflow/shared';
 import { Command } from 'cmdk';
-import {
-  Expand,
-  Keyboard,
-  Play,
-  Redo2,
-  Save,
-  Sparkles,
-  Undo2,
-} from 'lucide-react';
+import { Expand, Keyboard, Play, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -110,11 +102,7 @@ export function CommandPalette({
                 hint="⇧⌘Z"
                 onSelect={() => run(actions.onRedo)}
               />
-              <PaletteItem
-                icon={Expand}
-                label="Fit view"
-                onSelect={() => run(actions.onFitView)}
-              />
+              <PaletteItem icon={Expand} label="Fit view" onSelect={() => run(actions.onFitView)} />
               <PaletteItem
                 icon={Play}
                 label="Preview execution"
@@ -140,27 +128,27 @@ export function CommandPalette({
                 className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:uppercase"
               >
                 {group.types.map((type) => (
-                    <Command.Item
-                      key={type}
-                      value={`add ${nodeTypeLabel(type)} ${type} ${group.label}`}
-                      onSelect={() => run(() => actions.onAddNode(type))}
+                  <Command.Item
+                    key={type}
+                    value={`add ${nodeTypeLabel(type)} ${type} ${group.label}`}
+                    onSelect={() => run(() => actions.onAddNode(type))}
+                    className={cn(
+                      'data-[selected=true]:bg-surface-elevated data-[selected=true]:text-foreground',
+                      'text-muted-foreground flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'data-[selected=true]:bg-surface-elevated data-[selected=true]:text-foreground',
-                        'text-muted-foreground flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none',
+                        'inline-flex size-6 items-center justify-center rounded-md',
+                        nodeIconToneClass(type),
                       )}
                     >
-                      <span
-                        className={cn(
-                          'inline-flex size-6 items-center justify-center rounded-md',
-                          nodeIconToneClass(type),
-                        )}
-                      >
-                        <NodeTypeIcon type={type} className="size-3.5" />
-                      </span>
-                      <span className="flex-1">{nodeTypeLabel(type)}</span>
-                      <span className="text-muted-foreground/50 text-[10px]">Add node</span>
-                    </Command.Item>
-                  ))}
+                      <NodeTypeIcon type={type} className="size-3.5" />
+                    </span>
+                    <span className="flex-1">{nodeTypeLabel(type)}</span>
+                    <span className="text-muted-foreground/50 text-[10px]">Add node</span>
+                  </Command.Item>
+                ))}
               </Command.Group>
             ))}
           </Command.List>
@@ -199,9 +187,7 @@ function PaletteItem({
         <Icon className="size-3.5" />
       </span>
       <span className="flex-1">{label}</span>
-      {hint ? (
-        <kbd className="text-muted-foreground/60 font-mono text-[10px]">{hint}</kbd>
-      ) : null}
+      {hint ? <kbd className="text-muted-foreground/60 font-mono text-[10px]">{hint}</kbd> : null}
     </Command.Item>
   );
 }

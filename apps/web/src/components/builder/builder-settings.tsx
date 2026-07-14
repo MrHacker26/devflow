@@ -72,9 +72,7 @@ export function BuilderSettingsPopover({
             key={item.key}
             checked={value[item.key]}
             disabled={item.disabled}
-            onCheckedChange={(checked) =>
-              onChange({ ...value, [item.key]: Boolean(checked) })
-            }
+            onCheckedChange={(checked) => onChange({ ...value, [item.key]: Boolean(checked) })}
           >
             <span className="flex-1">{item.label}</span>
             {item.hint ? (

@@ -12,12 +12,7 @@ type GenericData = {
   [key: string]: unknown;
 };
 
-export function GenericWorkflowNode({
-  id,
-  data,
-  selected,
-  type,
-}: NodeProps & { type: string }) {
+export function GenericWorkflowNode({ id, data, selected, type }: NodeProps & { type: string }) {
   const nodeType = type as WorkflowNodeType;
   const d = data as GenericData;
   const label = typeof d.label === 'string' ? d.label : nodeType;
@@ -26,11 +21,7 @@ export function GenericWorkflowNode({
   return (
     <>
       {nodeType !== 'start' ? (
-        <NodeHandle
-          type="target"
-          position={handlePositions.top}
-          className="!bg-muted-foreground"
-        />
+        <NodeHandle type="target" position={handlePositions.top} className="!bg-muted-foreground" />
       ) : null}
       <BaseWorkflowNode
         id={id}
@@ -64,7 +55,11 @@ export function CommandWorkflowNode({ id, data, selected }: NodeProps) {
         data={d}
         selected={selected}
       />
-      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
+      <NodeHandle
+        type="source"
+        position={handlePositions.bottom}
+        className="!bg-muted-foreground"
+      />
     </>
   );
 }
@@ -82,7 +77,11 @@ export function InstallWorkflowNode({ id, data, selected }: NodeProps) {
         data={d}
         selected={selected}
       />
-      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
+      <NodeHandle
+        type="source"
+        position={handlePositions.bottom}
+        className="!bg-muted-foreground"
+      />
     </>
   );
 }
@@ -131,7 +130,11 @@ export function VerifyWorkflowNode({ id, data, selected }: NodeProps) {
         data={d}
         selected={selected}
       />
-      <NodeHandle type="source" position={handlePositions.bottom} className="!bg-muted-foreground" />
+      <NodeHandle
+        type="source"
+        position={handlePositions.bottom}
+        className="!bg-muted-foreground"
+      />
     </>
   );
 }

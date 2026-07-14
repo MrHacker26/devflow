@@ -43,7 +43,9 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <Label>{label}</Label>
       {description ? (
-        <p className="text-muted-foreground/80 -mt-0.5 text-[11px] leading-relaxed">{description}</p>
+        <p className="text-muted-foreground/80 -mt-0.5 text-[11px] leading-relaxed">
+          {description}
+        </p>
       ) : null}
       {children}
     </div>
@@ -59,10 +61,7 @@ function ExecutableFields({
 }) {
   return (
     <Section title="Advanced">
-      <Field
-        label="Skip If Command"
-        description="Skip this node when the command exits 0."
-      >
+      <Field label="Skip If Command" description="Skip this node when the command exits 0.">
         <Input
           value={typeof data.skipIfCommand === 'string' ? data.skipIfCommand : ''}
           placeholder="which docker"

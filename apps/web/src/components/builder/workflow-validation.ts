@@ -19,10 +19,7 @@ export type WorkflowValidation = {
   status: ValidationStatus;
 };
 
-function directedReachableFromStart(
-  nodes: BuilderNode[],
-  edges: BuilderEdge[],
-): Set<string> {
+function directedReachableFromStart(nodes: BuilderNode[], edges: BuilderEdge[]): Set<string> {
   const start = nodes.find((node) => node.type === 'start');
   const seen = new Set<string>();
   if (!start) return seen;
@@ -142,10 +139,7 @@ function missingRequiredField(node: BuilderNode): string | null {
   }
 }
 
-export function validateWorkflow(
-  nodes: BuilderNode[],
-  edges: BuilderEdge[],
-): WorkflowValidation {
+export function validateWorkflow(nodes: BuilderNode[], edges: BuilderEdge[]): WorkflowValidation {
   const startNodes = nodes.filter((node) => node.type === 'start');
   const endCount = nodes.filter((node) => node.type === 'end').length;
   const reachable = directedReachableFromStart(nodes, edges);
@@ -267,11 +261,7 @@ export function validateWorkflow(
   const hasFail = checks.some((check) => check.severity === 'fail');
   const hasWarn = checks.some((check) => check.severity === 'warn');
 
-  const status: ValidationStatus = hasFail
-    ? 'invalid'
-    : hasWarn
-      ? 'warnings'
-      : 'valid';
+  const status: ValidationStatus = hasFail ? 'invalid' : hasWarn ? 'warnings' : 'valid';
 
   return { checks, status };
 }

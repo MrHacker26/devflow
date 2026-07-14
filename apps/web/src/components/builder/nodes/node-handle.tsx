@@ -12,7 +12,7 @@ export function NodeHandle({
     <Handle
       {...props}
       className={cn(
-        'workflow-handle !h-3 !w-3 !border-[1.5px] !border-background transition-[transform,box-shadow,background-color] duration-150',
+        'workflow-handle !border-background !h-3 !w-3 !border-[1.5px] transition-[transform,box-shadow,background-color] duration-150',
         className,
       )}
     />

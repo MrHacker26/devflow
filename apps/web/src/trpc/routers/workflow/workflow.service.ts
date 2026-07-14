@@ -26,10 +26,7 @@ export async function listWorkflows(input: WorkflowListInput) {
     .from(workflows)
     .where(
       search
-        ? or(
-            ilike(workflows.name, `%${search}%`),
-            ilike(workflows.description, `%${search}%`),
-          )
+        ? or(ilike(workflows.name, `%${search}%`), ilike(workflows.description, `%${search}%`))
         : undefined,
     )
     .orderBy(desc(workflows.updatedAt));

@@ -13,12 +13,7 @@ import { getNodeBadges } from '../node-badges';
 import { useSimulationNodeId } from '../simulation-context';
 import { NodeTypeIcon } from './node-icons';
 
-export type NodeCategory =
-  | 'flow'
-  | 'execution'
-  | 'environment'
-  | 'validation'
-  | 'interaction';
+export type NodeCategory = 'flow' | 'execution' | 'environment' | 'validation' | 'interaction';
 
 export function nodeCategory(type: WorkflowNodeType): NodeCategory {
   switch (type) {
@@ -90,13 +85,7 @@ export function nodeTypeLabel(type: WorkflowNodeType): string {
   }
 }
 
-function NodeHoverMenu({
-  nodeId,
-  canDelete,
-}: {
-  nodeId: string;
-  canDelete: boolean;
-}) {
+function NodeHoverMenu({ nodeId, canDelete }: { nodeId: string; canDelete: boolean }) {
   const actions = useBuilderNodeActions();
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
@@ -332,7 +321,7 @@ export function BaseWorkflowNode({
           {badges.map((badge) => (
             <span
               key={badge}
-              className="border-border/70 text-muted-foreground/80 bg-black/20 inline-flex rounded-md border px-1.5 py-0.5 text-[9px] font-medium tracking-wide uppercase"
+              className="border-border/70 text-muted-foreground/80 inline-flex rounded-md border bg-black/20 px-1.5 py-0.5 text-[9px] font-medium tracking-wide uppercase"
             >
               {badge}
             </span>

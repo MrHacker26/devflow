@@ -24,14 +24,10 @@ export function getNodeMetaFields(
     case 'command':
       return compact([
         field('Command', String(data.command ?? ''), true),
-        data.platform && data.platform !== 'all'
-          ? field('Platform', String(data.platform))
-          : null,
+        data.platform && data.platform !== 'all' ? field('Platform', String(data.platform)) : null,
       ]);
     case 'install': {
-      const packages = Array.isArray(data.packages)
-        ? data.packages.map(String).join(', ')
-        : '';
+      const packages = Array.isArray(data.packages) ? data.packages.map(String).join(', ') : '';
       return compact([
         field('Manager', String(data.packageManager ?? '')),
         packages ? field('Packages', packages, true) : null,
@@ -129,10 +125,7 @@ export function getExecutionPath(
   return { nodes: ordered, edgeIds };
 }
 
-export function estimateExecutionSteps(
-  nodes: BuilderNode[],
-  edges: BuilderEdge[],
-): number {
+export function estimateExecutionSteps(nodes: BuilderNode[], edges: BuilderEdge[]): number {
   const path = getExecutionPath(nodes, edges);
   if (path.nodes.length > 0) return path.nodes.length;
   return nodes.length;

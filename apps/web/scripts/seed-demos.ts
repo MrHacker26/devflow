@@ -195,11 +195,7 @@ const vscodeExtensionsDemo: DemoWorkflow = {
       data: {
         label: 'Install extensions',
         packageManager: 'vscode-extension',
-        packages: [
-          'esbenp.prettier-vscode',
-          'dbaeumer.vscode-eslint',
-          'bradlc.vscode-tailwindcss',
-        ],
+        packages: ['esbenp.prettier-vscode', 'dbaeumer.vscode-eslint', 'bradlc.vscode-tailwindcss'],
       },
     },
     {

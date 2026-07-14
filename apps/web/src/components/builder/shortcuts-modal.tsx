@@ -41,10 +41,7 @@ export function ShortcutsModal({
         </AlertDialogHeader>
         <ul className="flex flex-col gap-2 py-1">
           {SHORTCUTS.map((item) => (
-            <li
-              key={item.action}
-              className="flex items-center justify-between gap-4 text-sm"
-            >
+            <li key={item.action} className="flex items-center justify-between gap-4 text-sm">
               <span className="text-muted-foreground">{item.action}</span>
               <kbd className="border-border bg-muted/50 text-foreground rounded-md border px-2 py-0.5 font-mono text-[11px]">
                 {item.keys}

@@ -88,12 +88,7 @@ export function toFlowNodes(nodes: BuilderNode[]): FlowNode[] {
       data: dataFields,
     };
 
-    if (
-      type === 'command' ||
-      type === 'gitClone' ||
-      type === 'install' ||
-      type === 'sshKey'
-    ) {
+    if (type === 'command' || type === 'gitClone' || type === 'install' || type === 'sshKey') {
       return {
         ...base,
         skipIfCommand,

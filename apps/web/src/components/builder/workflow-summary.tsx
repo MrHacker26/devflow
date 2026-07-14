@@ -6,10 +6,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import {
-  cliRunCommand,
-  estimateExecutionSteps,
-} from './node-meta';
+import { cliRunCommand, estimateExecutionSteps } from './node-meta';
 import { nodeTypeLabel } from './nodes/base-node';
 import type { BuilderEdge, BuilderNode } from './workflow-serialize';
 import type { ValidationStatus, WorkflowValidation } from './workflow-validation';
@@ -121,7 +118,10 @@ export function WorkflowSummaryPanel({
           CLI Command
         </p>
         <div className="border-border/60 bg-background/30 mt-3 flex items-center gap-2 rounded-xl border px-2.5 py-2">
-          <code className="text-foreground/90 flex-1 truncate font-mono text-[11px]" title={command}>
+          <code
+            className="text-foreground/90 flex-1 truncate font-mono text-[11px]"
+            title={command}
+          >
             {command}
           </code>
           <Button
@@ -155,7 +155,10 @@ export function WorkflowSummaryPanel({
                 {check.severity === 'pass' ? (
                   <Check className="text-success mt-0.5 size-3.5 shrink-0" strokeWidth={2.5} />
                 ) : check.severity === 'warn' ? (
-                  <TriangleAlert className="text-warning mt-0.5 size-3.5 shrink-0" strokeWidth={2.5} />
+                  <TriangleAlert
+                    className="text-warning mt-0.5 size-3.5 shrink-0"
+                    strokeWidth={2.5}
+                  />
                 ) : (
                   <X className="text-destructive mt-0.5 size-3.5 shrink-0" strokeWidth={2.5} />
                 )}

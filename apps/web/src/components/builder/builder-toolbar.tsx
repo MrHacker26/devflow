@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  Check,
-  LoaderCircle,
-  MoreHorizontal,
-  Play,
-  Save,
-  Sparkles,
-  Workflow,
-} from 'lucide-react';
+import { Check, LoaderCircle, MoreHorizontal, Play, Save, Sparkles, Workflow } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -30,10 +22,7 @@ import { authClient } from '@/lib/auth-client';
 import { loginHref } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
-import {
-  BuilderSettingsPopover,
-  type BuilderPreferences,
-} from './builder-settings';
+import { BuilderSettingsPopover, type BuilderPreferences } from './builder-settings';
 import { ValidationBadge } from './workflow-summary';
 import type { ValidationStatus } from './workflow-validation';
 

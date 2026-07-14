@@ -13,11 +13,7 @@ import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
 import { NodeTypeIcon } from './nodes/node-icons';
 import { paletteNodeGroups } from './nodes/node-types';
 
-export function NodePalette({
-  onAdd,
-}: {
-  onAdd: (type: WorkflowNodeType) => void;
-}) {
+export function NodePalette({ onAdd }: { onAdd: (type: WorkflowNodeType) => void }) {
   const [query, setQuery] = useState('');
 
   const filteredGroups = useMemo(() => {
@@ -86,26 +82,26 @@ export function NodePalette({
               </p>
               <div className="flex flex-col gap-0.5">
                 {group.types.map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => onAdd(type)}
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onAdd(type)}
+                    className={cn(
+                      'hover:bg-surface-elevated group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors',
+                      'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <span
                       className={cn(
-                        'hover:bg-surface-elevated group flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors',
-                        'text-muted-foreground hover:text-foreground',
+                        'inline-flex size-6 shrink-0 items-center justify-center rounded-md transition-transform group-hover:scale-105',
+                        nodeIconToneClass(type),
                       )}
                     >
-                      <span
-                        className={cn(
-                          'inline-flex size-6 shrink-0 items-center justify-center rounded-md transition-transform group-hover:scale-105',
-                          nodeIconToneClass(type),
-                        )}
-                      >
-                        <NodeTypeIcon type={type} className="size-3.5" strokeWidth={2.1} />
-                      </span>
-                      {nodeTypeLabel(type)}
-                    </button>
-                  ))}
+                      <NodeTypeIcon type={type} className="size-3.5" strokeWidth={2.1} />
+                    </span>
+                    {nodeTypeLabel(type)}
+                  </button>
+                ))}
               </div>
             </motion.div>
           ))

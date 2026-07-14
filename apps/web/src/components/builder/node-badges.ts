@@ -1,9 +1,6 @@
 import type { WorkflowNodeType } from '@devflow/shared';
 
-export function getNodeBadges(
-  type: WorkflowNodeType,
-  data: Record<string, unknown>,
-): string[] {
+export function getNodeBadges(type: WorkflowNodeType, data: Record<string, unknown>): string[] {
   const badges: string[] = [];
 
   if (type === 'verify') badges.push('verify');
