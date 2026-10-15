@@ -1,6 +1,6 @@
 import type { WorkflowListInput, WorkflowSaveInput } from '@devflow/shared';
 import { TRPCError } from '@trpc/server';
-import { desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { match, P } from 'ts-pattern';
 import * as z from 'zod';
 
@@ -11,7 +11,15 @@ const workflowIdSchema = z.object({
   id: z.string().uuid(),
 });
 
-export async function listWorkflows(input: WorkflowListInput) {
+function ownedBy(userId: string, id: string) {
+  return and(eq(workflows.id, id), eq(workflows.userId, userId));
+}
+
+function notFound(id: string) {
+  return new TRPCError({ code: 'NOT_FOUND', message: `Workflow ${id} not found` });
+}
+
+export async function listWorkflows(userId: string, input: WorkflowListInput) {
   const search = input.search?.trim();
 
   return db
@@ -25,27 +33,31 @@ export async function listWorkflows(input: WorkflowListInput) {
     })
     .from(workflows)
     .where(
-      search
-        ? or(ilike(workflows.name, `%${search}%`), ilike(workflows.description, `%${search}%`))
-        : undefined,
+      and(
+        eq(workflows.userId, userId),
+        search
+          ? or(ilike(workflows.name, `%${search}%`), ilike(workflows.description, `%${search}%`))
+          : undefined,
+      ),
     )
     .orderBy(desc(workflows.updatedAt));
 }
 
-export async function getWorkflowById(id: string) {
-  const [row] = await db.select().from(workflows).where(eq(workflows.id, id)).limit(1);
+export async function getWorkflowById(userId: string, id: string) {
+  const [row] = await db.select().from(workflows).where(ownedBy(userId, id)).limit(1);
 
   if (!row) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: `Workflow ${id} not found` });
+    throw notFound(id);
   }
 
   return row;
 }
 
-async function createWorkflow(input: WorkflowSaveInput) {
+async function createWorkflow(userId: string, input: WorkflowSaveInput) {
   const [row] = await db
     .insert(workflows)
     .values({
+      userId,
       version: input.version,
       name: input.name,
       description: input.description,
@@ -62,7 +74,7 @@ async function createWorkflow(input: WorkflowSaveInput) {
   return row;
 }
 
-async function updateWorkflow(id: string, input: WorkflowSaveInput) {
+async function updateWorkflow(userId: string, id: string, input: WorkflowSaveInput) {
   const [row] = await db
     .update(workflows)
     .set({
@@ -74,29 +86,29 @@ async function updateWorkflow(id: string, input: WorkflowSaveInput) {
       layout: input.layout,
       updatedAt: sql`now()`,
     })
-    .where(eq(workflows.id, id))
+    .where(ownedBy(userId, id))
     .returning();
 
   if (!row) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: `Workflow ${id} not found` });
+    throw notFound(id);
   }
 
   return row;
 }
 
-export async function saveWorkflow(input: WorkflowSaveInput) {
+export async function saveWorkflow(userId: string, input: WorkflowSaveInput) {
   return match(input.id)
-    .with(P.string.minLength(1), (id) => updateWorkflow(id, input))
-    .otherwise(() => createWorkflow(input));
+    .with(P.string.minLength(1), (id) => updateWorkflow(userId, id, input))
+    .otherwise(() => createWorkflow(userId, input));
 }
 
-export async function deleteWorkflow(id: string) {
-  const [row] = await db.delete(workflows).where(eq(workflows.id, id)).returning({
+export async function deleteWorkflow(userId: string, id: string) {
+  const [row] = await db.delete(workflows).where(ownedBy(userId, id)).returning({
     id: workflows.id,
   });
 
   if (!row) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: `Workflow ${id} not found` });
+    throw notFound(id);
   }
 
   return row;

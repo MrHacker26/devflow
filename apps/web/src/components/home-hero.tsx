@@ -122,7 +122,7 @@ export function HomeHero() {
             >
               <Link href="/workflows">
                 <FolderKanban data-icon="inline-start" />
-                {user ? 'Your workflows' : 'Browse workflows'}
+                {user ? 'Your workflows' : 'Get started'}
                 <ChevronRight data-icon="inline-end" />
               </Link>
             </Button>

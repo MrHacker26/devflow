@@ -1,6 +1,6 @@
 import { workflowListInputSchema, workflowSaveInputSchema } from '@devflow/shared';
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/trpc/init';
+import { createTRPCRouter, protectedProcedure } from '@/trpc/init';
 
 import {
   deleteWorkflow,
@@ -11,15 +11,19 @@ import {
 } from './workflow.service';
 
 export const workflowRouter = createTRPCRouter({
-  list: publicProcedure.input(workflowListInputSchema).query(({ input }) => listWorkflows(input)),
+  list: protectedProcedure
+    .input(workflowListInputSchema)
+    .query(({ ctx, input }) => listWorkflows(ctx.user.id, input)),
 
-  getById: publicProcedure.input(workflowIdSchema).query(({ input }) => getWorkflowById(input.id)),
+  getById: protectedProcedure
+    .input(workflowIdSchema)
+    .query(({ ctx, input }) => getWorkflowById(ctx.user.id, input.id)),
 
   save: protectedProcedure
     .input(workflowSaveInputSchema)
-    .mutation(({ input }) => saveWorkflow(input)),
+    .mutation(({ ctx, input }) => saveWorkflow(ctx.user.id, input)),
 
   delete: protectedProcedure
     .input(workflowIdSchema)
-    .mutation(({ input }) => deleteWorkflow(input.id)),
+    .mutation(({ ctx, input }) => deleteWorkflow(ctx.user.id, input.id)),
 });

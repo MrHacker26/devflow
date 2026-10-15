@@ -9,9 +9,9 @@ See the [root README](../../README.md) for project overview and first-time setup
 | Route                | Description                                   |
 | -------------------- | --------------------------------------------- |
 | `/`                  | Landing page                                  |
-| `/workflows`         | Workflow dashboard with search                |
-| `/builder`           | New workflow                                  |
-| `/builder?id=<uuid>` | Edit an existing workflow                     |
+| `/workflows`         | Your workflows, with search (requires login)  |
+| `/builder`           | New workflow (login required to save)         |
+| `/builder?id=<uuid>` | Edit one of your workflows (requires login)   |
 | `/login`             | Sign in / sign up                             |
 | `/api/trpc/*`        | tRPC endpoint                                 |
 | `/api/auth/*`        | Better Auth endpoint                          |
@@ -27,7 +27,7 @@ See the [root README](../../README.md) for project overview and first-time setup
 | `bun run db:generate`   | Generate a migration from schema changes in `src/db/schema`    |
 | `bun run db:migrate`    | Apply pending migrations                                       |
 | `bun run db:studio`     | Open Drizzle Studio                                            |
-| `bun run db:seed`       | Upsert demo workflows (idempotent, matched by name)            |
+| `bun run db:seed`       | Upsert demo workflows for `SEED_USER_EMAIL` or the oldest user |
 | `bun run auth:generate` | Regenerate `src/db/schema/auth.ts` from the Better Auth config |
 
 ## Source layout

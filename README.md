@@ -80,13 +80,20 @@ cp apps/web/.env.example apps/web/.env
 
 cd apps/web
 bun run db:migrate   # apply migrations
-bun run db:seed      # optional: load demo workflows
 cd ../..
 
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) and sign up. Workflows are private to the account that created them.
+
+To load demo workflows into your account (optional, after signing up):
+
+```sh
+cd apps/web
+bun run db:seed                                   # seeds the oldest user
+SEED_USER_EMAIL=you@example.com bun run db:seed   # or a specific user
+```
 
 ### Environment variables
 

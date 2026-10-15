@@ -1,10 +1,11 @@
 import 'dotenv/config';
 
 import type { FlowEdge, FlowNode, WorkflowLayout } from '@devflow/shared';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { user } from '../src/db/schema/auth';
 import { workflows } from '../src/db/schema/workflow';
 
 type DemoWorkflow = {
@@ -247,11 +248,28 @@ async function main() {
   const client = postgres(databaseUrl);
   const db = drizzle(client);
 
+  const email = process.env.SEED_USER_EMAIL;
+  const [owner] = await db
+    .select({ id: user.id, email: user.email })
+    .from(user)
+    .where(email ? eq(user.email, email) : undefined)
+    .orderBy(asc(user.createdAt))
+    .limit(1);
+
+  if (!owner) {
+    throw new Error(
+      email
+        ? `No user with email ${email}. Sign up in the app first.`
+        : 'No users found. Sign up in the app first, or set SEED_USER_EMAIL.',
+    );
+  }
+  console.log(`seeding demos for ${owner.email}`);
+
   for (const demo of demos) {
     const existing = await db
       .select({ id: workflows.id })
       .from(workflows)
-      .where(eq(workflows.name, demo.name))
+      .where(and(eq(workflows.userId, owner.id), eq(workflows.name, demo.name)))
       .limit(1);
 
     if (existing[0]) {
@@ -271,6 +289,7 @@ async function main() {
     }
 
     await db.insert(workflows).values({
+      userId: owner.id,
       version: 1,
       name: demo.name,
       description: demo.description,
