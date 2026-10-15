@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# @devflow/web
 
-## Getting Started
+The DevFlow web app: landing page, workflow dashboard, visual builder, auth, and the tRPC API.
 
-First, run the development server:
+See the [root README](../../README.md) for project overview and first-time setup.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Routes
+
+| Route                | Description                                   |
+| -------------------- | --------------------------------------------- |
+| `/`                  | Landing page                                  |
+| `/workflows`         | Workflow dashboard with search                |
+| `/builder`           | New workflow                                  |
+| `/builder?id=<uuid>` | Edit an existing workflow                     |
+| `/login`             | Sign in / sign up                             |
+| `/api/trpc/*`        | tRPC endpoint                                 |
+| `/api/auth/*`        | Better Auth endpoint                          |
+
+## Scripts
+
+| Command                 | Description                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| `bun run dev`           | Start the Next.js dev server                                   |
+| `bun run build`         | Production build                                               |
+| `bun run start`         | Serve the production build                                     |
+| `bun run lint`          | ESLint                                                         |
+| `bun run db:generate`   | Generate a migration from schema changes in `src/db/schema`    |
+| `bun run db:migrate`    | Apply pending migrations                                       |
+| `bun run db:studio`     | Open Drizzle Studio                                            |
+| `bun run db:seed`       | Upsert demo workflows (idempotent, matched by name)            |
+| `bun run auth:generate` | Regenerate `src/db/schema/auth.ts` from the Better Auth config |
+
+## Source layout
+
+```
+src/
+  app/                    Next.js routes and API handlers
+  components/
+    builder/              Workflow builder: canvas, nodes, edges, inspector, palette,
+                          validation, serialization, hotkeys
+    workflows/            Dashboard
+    ui/                   shadcn/ui primitives
+  db/
+    schema/               Drizzle tables (auth, workflows)
+    migrations/           Generated SQL migrations
+  lib/                    auth, db client, env validation, helpers
+  trpc/
+    routers/              tRPC routers; business logic lives in *.service.ts
+scripts/
+  seed-demos.ts           Demo workflow seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Changing the database schema
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Edit tables in `src/db/schema/`.
+2. Run `bun run db:generate` and review the SQL in `src/db/migrations/`.
+3. Run `bun run db:migrate`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If you change the workflow JSON shape, update `@devflow/shared` and bump `version` in `workflowSchema`.
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This app uses Next.js 16, which has breaking changes from earlier versions. Check `node_modules/next/dist/docs/` before relying on older Next.js conventions.
