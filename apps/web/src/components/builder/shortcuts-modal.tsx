@@ -9,19 +9,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 
-const SHORTCUTS = [
-  { action: 'Command palette', keys: '⌘ / Ctrl + K' },
-  { action: 'Save', keys: '⌘ / Ctrl + S' },
-  { action: 'Undo', keys: '⌘ / Ctrl + Z' },
-  { action: 'Redo', keys: '⌘ / Ctrl + Shift + Z' },
-  { action: 'Duplicate', keys: '⌘ / Ctrl + D' },
-  { action: 'Delete', keys: 'Delete' },
-  { action: 'Fit View', keys: 'Toolbar → Fit' },
-  { action: 'Quick Add Node', keys: 'Double-click canvas' },
-  { action: 'Search Nodes', keys: 'Palette search' },
-  { action: 'Shortcuts', keys: '?' },
-] as const;
+const SHORTCUTS: { action: string; keys?: string[]; hint?: string }[] = [
+  { action: 'Command palette', keys: ['⌘', 'K'] },
+  { action: 'Save', keys: ['⌘', 'S'] },
+  { action: 'Undo', keys: ['⌘', 'Z'] },
+  { action: 'Redo', keys: ['⌘', '⇧', 'Z'] },
+  { action: 'Duplicate node', keys: ['⌘', 'D'] },
+  { action: 'Delete node', keys: ['Del'] },
+  { action: 'Keyboard shortcuts', keys: ['?'] },
+  { action: 'Quick add node', hint: 'Double-click canvas' },
+];
 
 export function ShortcutsModal({
   open,
@@ -36,16 +35,25 @@ export function ShortcutsModal({
         <AlertDialogHeader>
           <AlertDialogTitle>Keyboard shortcuts</AlertDialogTitle>
           <AlertDialogDescription id="shortcuts-desc">
-            Productivity shortcuts for the builder. Press Esc to close.
+            Use Ctrl instead of ⌘ on Windows and Linux.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <ul className="flex flex-col gap-2 py-1">
+        <ul className="divide-y rounded-lg border">
           {SHORTCUTS.map((item) => (
-            <li key={item.action} className="flex items-center justify-between gap-4 text-sm">
-              <span className="text-muted-foreground">{item.action}</span>
-              <kbd className="border-border bg-muted/50 text-foreground rounded-md border px-2 py-0.5 font-mono text-[11px]">
-                {item.keys}
-              </kbd>
+            <li
+              key={item.action}
+              className="flex h-10 items-center justify-between gap-4 px-3 text-sm"
+            >
+              <span>{item.action}</span>
+              {item.keys ? (
+                <KbdGroup>
+                  {item.keys.map((key) => (
+                    <Kbd key={key}>{key}</Kbd>
+                  ))}
+                </KbdGroup>
+              ) : (
+                <span className="text-muted-foreground text-xs">{item.hint}</span>
+              )}
             </li>
           ))}
         </ul>

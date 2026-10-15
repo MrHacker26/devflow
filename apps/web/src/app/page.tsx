@@ -1,9 +1,10 @@
-import { HomeHero } from '@/components/home-hero';
+import { headers } from 'next/headers';
 
-export default function Home() {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <HomeHero />
-    </div>
-  );
+import { HomeHero } from '@/components/home-hero';
+import { auth } from '@/lib/auth';
+
+export default async function Home() {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  return <HomeHero signedIn={Boolean(session)} />;
 }

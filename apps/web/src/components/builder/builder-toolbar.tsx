@@ -1,11 +1,25 @@
 'use client';
 
-import { Check, LoaderCircle, MoreHorizontal, Play, Save, Sparkles, Workflow } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import {
+  Check,
+  ChevronLeft,
+  CircleDot,
+  Copy,
+  Download,
+  Keyboard,
+  LoaderCircle,
+  MoreHorizontal,
+  Pencil,
+  Play,
+  Sparkles,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRef, useState } from 'react';
 
+import { LogoMark } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,8 +30,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { UserMenu } from '@/components/user-menu';
+import { Separator } from '@/components/ui/separator';
 import { WithTooltip } from '@/components/ui/with-tooltip';
+import { UserMenu } from '@/components/user-menu';
 import { authClient } from '@/lib/auth-client';
 import { loginHref } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
@@ -86,28 +101,24 @@ export function BuilderToolbar({
       window.setTimeout(() => setNameFlash(false), 1400);
     }, 50);
   }
+
   return (
     <div className="relative z-50 shrink-0">
-      <motion.header
-        className="blueprint-panel flex items-center gap-3 border-b px-3 py-1.5"
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <Link
-          href="/workflows"
-          className="text-primary font-heading inline-flex shrink-0 items-center gap-1.5 text-sm font-bold tracking-tight hover:opacity-90"
-          title="Back to workflows"
-        >
-          <span className="bg-primary/15 inline-flex size-6 items-center justify-center rounded-md">
-            <Workflow className="size-3" />
-          </span>
-          <span className="hidden sm:inline">DevFlow</span>
-        </Link>
+      <header className="bg-background flex h-14 items-center gap-3 border-b px-3">
+        <WithTooltip label="Back to workflows">
+          <Link
+            href="/workflows"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:ring-ring/50 inline-flex h-8 items-center gap-1 rounded-lg pr-1.5 pl-1 transition-colors outline-none focus-visible:ring-3"
+            aria-label="Back to workflows"
+          >
+            <ChevronLeft className="size-4" />
+            <LogoMark />
+          </Link>
+        </WithTooltip>
 
-        <div className="bg-border hidden h-6 w-px shrink-0 sm:block" />
+        <Separator orientation="vertical" className="h-6!" />
 
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5">
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
           <Input
             ref={nameRef}
             id="workflow-name"
@@ -117,64 +128,47 @@ export function BuilderToolbar({
             title={workflowId ? `ID: ${workflowId}` : undefined}
             aria-label="Workflow name"
             className={cn(
-              'h-6 min-w-0 border-0 bg-transparent px-1.5 text-sm font-semibold tracking-tight shadow-none focus-visible:ring-0',
-              nameFlash && 'bg-primary/10 ring-primary/40 rounded-md ring-2',
+              'hover:bg-accent/60 h-6 max-w-md min-w-0 border-transparent bg-transparent px-1.5 text-sm font-medium shadow-none',
+              nameFlash && 'ring-primary/40 ring-3',
             )}
           />
           <Input
             id="workflow-description"
             value={description}
             onChange={(e) => onDescriptionChange(e.target.value)}
-            placeholder="Add a short description…"
+            placeholder="Add a description"
             aria-label="Workflow description"
-            className="text-muted-foreground h-5 min-w-0 border-0 bg-transparent px-1.5 text-xs shadow-none placeholder:text-xs focus-visible:ring-0"
+            className="text-muted-foreground hover:bg-accent/60 h-5 max-w-md min-w-0 border-transparent bg-transparent px-1.5 text-xs shadow-none"
           />
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <ValidationBadge status={validationStatus} />
-          <span
-            className="text-muted-foreground hidden items-center gap-1 text-[11px] lg:inline-flex"
-            aria-live="polite"
-          >
-            {saveStatus === 'saving' ? (
-              <>
-                <LoaderCircle className="size-3 animate-spin" />
-                Saving
-              </>
-            ) : saveStatus === 'unsaved' ? (
-              'Unsaved'
-            ) : (
-              <>
-                <Check className="text-success size-3" />
-                Saved
-              </>
-            )}
-          </span>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <div className="hidden items-center gap-3 pr-1.5 md:flex">
+            <ValidationBadge status={validationStatus} />
+            <SaveIndicator status={saveStatus} />
+          </div>
+
+          <Separator orientation="vertical" className="mx-1 hidden h-6! md:block" />
 
           <WithTooltip label="Preview execution path">
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
-              className="rounded-lg"
               onClick={onPreviewExecution}
               aria-label="Preview"
             >
-              <Play className="size-3.5" />
+              <Play />
             </Button>
           </WithTooltip>
-          <WithTooltip label={isSimulating ? 'Simulating…' : 'Simulate execution'}>
+          <WithTooltip label={isSimulating ? 'Simulating…' : 'Simulate run'}>
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
-              className="rounded-lg"
               onClick={onSimulate}
               disabled={isSimulating}
               aria-label={isSimulating ? 'Simulating' : 'Simulate'}
             >
-              <Sparkles className="size-3.5" />
+              <Sparkles />
             </Button>
           </WithTooltip>
 
@@ -183,93 +177,108 @@ export function BuilderToolbar({
           <DropdownMenu>
             <WithTooltip label="More actions">
               <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-lg"
-                  aria-label="More actions"
-                >
-                  <MoreHorizontal className="size-4" />
+                <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
             </WithTooltip>
-            <DropdownMenuContent align="end" className="z-[1100] min-w-48">
-              <DropdownMenuItem onClick={onExportJson}>Export JSON</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="z-[1100] w-52">
+              <DropdownMenuItem onSelect={startRename}>
+                <Pencil />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onDuplicateWorkflow}>
+                <Copy />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onExportJson}>
+                <Download />
+                Export JSON
+              </DropdownMenuItem>
               <DropdownMenuItem disabled>
+                <Upload />
                 Import JSON
                 <DropdownMenuShortcut>Soon</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDuplicateWorkflow}>Duplicate</DropdownMenuItem>
-              <DropdownMenuItem onSelect={startRename}>Rename</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onOpenShortcuts}>
+                <Keyboard />
+                Keyboard shortcuts
+                <DropdownMenuShortcut>?</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 disabled={!workflowId}
-                onClick={onDeleteWorkflow}
+                onSelect={onDeleteWorkflow}
               >
-                Delete
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onOpenShortcuts}>
-                Shortcuts
-                <DropdownMenuShortcut>?</DropdownMenuShortcut>
+                <Trash2 />
+                Delete workflow
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <WithTooltip label={isSaving ? 'Saving…' : 'Save (⌘S)'}>
-            <Button
-              type="button"
-              size="sm"
-              onClick={onSave}
-              disabled={isSaving || !name.trim()}
-              aria-label="Save"
-              className="rounded-lg"
-            >
-              {isSaving ? (
-                <LoaderCircle data-icon="inline-start" className="size-3.5 animate-spin" />
-              ) : (
-                <Save data-icon="inline-start" className="size-3.5" />
-              )}
+            <Button size="sm" onClick={onSave} disabled={isSaving || !name.trim()} className="ml-1">
+              {isSaving ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : null}
               Save
             </Button>
           </WithTooltip>
 
+          <Separator orientation="vertical" className="mx-1 h-6!" />
+
           <UserMenu />
         </div>
-      </motion.header>
+      </header>
 
-      <AnimatePresence>
-        {saveError ? (
-          <motion.p
-            key="error"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="text-destructive border-border border-b px-3 py-1.5 text-xs"
+      {saveError ? (
+        <p className="bg-destructive/10 text-destructive border-b px-4 py-2 text-xs">
+          {saveError}{' '}
+          {!user ? (
+            <Link href={loginHref(returnTo)} className="font-medium underline underline-offset-2">
+              Sign in to continue
+            </Link>
+          ) : null}
+        </p>
+      ) : null}
+      {!user && !session.isPending && !saveError ? (
+        <p className="text-muted-foreground bg-card border-b px-4 py-2 text-xs">
+          You’re editing as a guest.{' '}
+          <Link
+            href={loginHref(returnTo)}
+            className="text-foreground font-medium underline underline-offset-2"
           >
-            {saveError}{' '}
-            {!user ? (
-              <Link href={loginHref(returnTo)} className="underline underline-offset-2">
-                Sign in to continue
-              </Link>
-            ) : null}
-          </motion.p>
-        ) : null}
-        {!user && !saveError ? (
-          <motion.p
-            key="hint"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-muted-foreground border-border border-b px-3 py-1 text-[11px]"
-          >
-            <Link href={loginHref(returnTo)} className="text-primary hover:underline">
-              Sign in
-            </Link>{' '}
-            to save this workflow.
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+            Sign in
+          </Link>{' '}
+          to save this workflow.
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  return (
+    <span
+      className="text-muted-foreground inline-flex items-center gap-1.5 text-xs"
+      aria-live="polite"
+    >
+      {status === 'saving' ? (
+        <>
+          <LoaderCircle className="size-3.5 animate-spin" />
+          Saving
+        </>
+      ) : status === 'unsaved' ? (
+        <>
+          <CircleDot className="text-warning size-3.5" />
+          Unsaved changes
+        </>
+      ) : (
+        <>
+          <Check className="text-success size-3.5" />
+          Saved
+        </>
+      )}
+    </span>
   );
 }

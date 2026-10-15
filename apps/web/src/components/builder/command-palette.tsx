@@ -61,7 +61,7 @@ export function CommandPalette({
       <div className="pointer-events-none absolute inset-x-0 top-[14vh] flex justify-center px-4">
         <Command
           label="Command palette"
-          className="border-border bg-surface pointer-events-auto w-full max-w-lg overflow-hidden rounded-2xl border shadow-[0_24px_64px_-24px_rgb(0_0_0_/_80%)]"
+          className="border-border bg-popover pointer-events-auto w-full max-w-lg overflow-hidden rounded-xl border shadow-2xl"
           loop
         >
           <div className="border-border flex items-center gap-2 border-b px-3">
@@ -70,7 +70,7 @@ export function CommandPalette({
               className="placeholder:text-muted-foreground h-11 w-full bg-transparent text-sm outline-none"
               autoFocus
             />
-            <kbd className="text-muted-foreground/70 rounded border border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] px-1.5 py-0.5 font-mono text-[10px]">
+            <kbd className="text-muted-foreground/70 bg-muted rounded-sm px-1.5 py-0.5 font-sans text-xs">
               esc
             </kbd>
           </div>
@@ -82,7 +82,7 @@ export function CommandPalette({
 
             <Command.Group
               heading="Actions"
-              className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:uppercase"
+              className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium"
             >
               <PaletteItem
                 icon={Save}
@@ -125,7 +125,7 @@ export function CommandPalette({
               <Command.Group
                 key={group.label}
                 heading={`Add · ${group.label}`}
-                className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-[0.14em] [&_[cmdk-group-heading]]:uppercase"
+                className="text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium"
               >
                 {group.types.map((type) => (
                   <Command.Item
@@ -133,7 +133,7 @@ export function CommandPalette({
                     value={`add ${nodeTypeLabel(type)} ${type} ${group.label}`}
                     onSelect={() => run(() => actions.onAddNode(type))}
                     className={cn(
-                      'data-[selected=true]:bg-surface-elevated data-[selected=true]:text-foreground',
+                      'data-[selected=true]:bg-accent data-[selected=true]:text-foreground',
                       'text-muted-foreground flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none',
                     )}
                   >
@@ -146,7 +146,7 @@ export function CommandPalette({
                       <NodeTypeIcon type={type} className="size-3.5" />
                     </span>
                     <span className="flex-1">{nodeTypeLabel(type)}</span>
-                    <span className="text-muted-foreground/50 text-[10px]">Add node</span>
+                    <span className="text-muted-foreground text-xs">Add node</span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -179,7 +179,7 @@ function PaletteItem({
       value={label}
       onSelect={onSelect}
       className={cn(
-        'data-[selected=true]:bg-surface-elevated data-[selected=true]:text-foreground',
+        'data-[selected=true]:bg-accent data-[selected=true]:text-foreground',
         'text-muted-foreground flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm outline-none',
       )}
     >
@@ -187,7 +187,7 @@ function PaletteItem({
         <Icon className="size-3.5" />
       </span>
       <span className="flex-1">{label}</span>
-      {hint ? <kbd className="text-muted-foreground/60 font-mono text-[10px]">{hint}</kbd> : null}
+      {hint ? <kbd className="text-muted-foreground font-mono text-xs">{hint}</kbd> : null}
     </Command.Item>
   );
 }

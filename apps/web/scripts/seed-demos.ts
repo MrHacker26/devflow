@@ -106,13 +106,13 @@ const macOnboarding: DemoWorkflow = {
   ],
   layout: {
     start: { x: 280, y: 0 },
-    'prompt-email': { x: 280, y: 200 },
-    'install-brew-tools': { x: 280, y: 400 },
-    'install-vscode': { x: 280, y: 620 },
-    'ssh-key': { x: 280, y: 840 },
-    'clone-repo': { x: 280, y: 1060 },
-    'verify-bun': { x: 280, y: 1280 },
-    end: { x: 280, y: 1480 },
+    'prompt-email': { x: 280, y: 120 },
+    'install-brew-tools': { x: 280, y: 340 },
+    'install-vscode': { x: 280, y: 560 },
+    'ssh-key': { x: 280, y: 780 },
+    'clone-repo': { x: 280, y: 1000 },
+    'verify-bun': { x: 280, y: 1220 },
+    end: { x: 280, y: 1460 },
   },
 };
 
@@ -171,11 +171,11 @@ const nodeVerifyDemo: DemoWorkflow = {
   ],
   layout: {
     start: { x: 360, y: 0 },
-    'if-node': { x: 360, y: 200 },
-    'install-node': { x: 40, y: 440 },
-    'verify-node': { x: 360, y: 700 },
-    'verify-docker': { x: 360, y: 940 },
-    end: { x: 360, y: 1180 },
+    'if-node': { x: 360, y: 120 },
+    'install-node': { x: 40, y: 340 },
+    'verify-node': { x: 360, y: 560 },
+    'verify-docker': { x: 360, y: 800 },
+    end: { x: 360, y: 1040 },
   },
 };
 
@@ -229,11 +229,11 @@ const vscodeExtensionsDemo: DemoWorkflow = {
   ],
   layout: {
     start: { x: 280, y: 0 },
-    'wait-code': { x: 280, y: 200 },
-    'install-exts': { x: 280, y: 400 },
-    'set-env': { x: 280, y: 640 },
-    'echo-done': { x: 280, y: 860 },
-    end: { x: 280, y: 1080 },
+    'wait-code': { x: 280, y: 120 },
+    'install-exts': { x: 280, y: 300 },
+    'set-env': { x: 280, y: 520 },
+    'echo-done': { x: 280, y: 740 },
+    end: { x: 280, y: 980 },
   },
 };
 

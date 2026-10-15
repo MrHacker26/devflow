@@ -267,25 +267,23 @@ export function validateWorkflow(nodes: BuilderNode[], edges: BuilderEdge[]): Wo
 }
 
 export function nodeCategoryColor(type: string | undefined): string {
+  // Mirrors the node tone tokens in globals.css; SVG fills need literal colors.
   switch (type) {
-    case 'start':
-    case 'end':
-      return '#5eead4';
     case 'if':
-      return '#f2b57a';
+      return 'oklch(0.8 0.13 75)';
     case 'verify':
-      return '#62c98a';
+      return 'oklch(0.74 0.15 155)';
     case 'command':
     case 'install':
     case 'gitClone':
-      return '#4fd1c5';
+      return 'oklch(0.72 0.12 250)';
     case 'sshKey':
     case 'env':
-      return '#8b9bb3';
+      return 'oklch(0.72 0.14 300)';
     case 'prompt':
     case 'wait':
-      return '#f2b57a';
+      return 'oklch(0.8 0.12 180)';
     default:
-      return '#8b9bb3';
+      return 'oklch(0.68 0.012 265)';
   }
 }

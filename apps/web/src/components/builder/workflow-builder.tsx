@@ -14,9 +14,30 @@ import {
 } from '@xyflow/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { FileQuestion, LoaderCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '@xyflow/react/dist/style.css';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { authClient } from '@/lib/auth-client';
 import { loginHref } from '@/lib/navigation';
 import { useTRPC } from '@/trpc/client';
@@ -138,6 +159,7 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     items: ContextMenuItem[];
   } | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [preferences, setPreferences] = useState<BuilderPreferences>(defaultBuilderPreferences);
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
@@ -569,7 +591,8 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
 
   if (initialWorkflowId && !hydrated && existingQuery.isLoading) {
     return (
-      <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
+      <div className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm">
+        <LoaderCircle className="size-4 animate-spin" />
         Loading workflow…
       </div>
     );
@@ -577,9 +600,22 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
 
   if (initialWorkflowId && existingQuery.isError) {
     return (
-      <div className="text-destructive flex flex-1 items-center justify-center text-sm">
-        {existingQuery.error.message}
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileQuestion />
+          </EmptyMedia>
+          <EmptyTitle>Workflow not found</EmptyTitle>
+          <EmptyDescription>
+            It may have been deleted, or it belongs to a different account.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild variant="outline">
+            <Link href="/workflows">Back to workflows</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
@@ -617,33 +653,19 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                   }
                 }}
                 onDeleteWorkflow={() => {
-                  if (!workflowId) return;
-                  if (!window.confirm('Delete this workflow permanently?')) return;
-                  deleteMutation.mutate({ id: workflowId });
+                  if (workflowId) setConfirmDeleteOpen(true);
                 }}
                 onOpenShortcuts={() => setShortcutsOpen(true)}
               />
               <div className="flex min-h-0 flex-1">
                 {paletteCollapsed ? (
-                  <aside className="blueprint-panel flex w-10 shrink-0 flex-col items-center border-r py-3">
+                  <aside className="bg-sidebar flex w-12 shrink-0 flex-col items-center border-r py-2">
                     <PaletteCollapseButton collapsed onToggle={() => setPaletteCollapsed(false)} />
                   </aside>
                 ) : (
-                  <div className="relative flex">
-                    <NodePalette onAdd={addNode} />
-                    <div className="absolute top-2 right-2 z-10">
-                      <PaletteCollapseButton
-                        collapsed={false}
-                        onToggle={() => setPaletteCollapsed(true)}
-                      />
-                    </div>
-                  </div>
+                  <NodePalette onAdd={addNode} onCollapse={() => setPaletteCollapsed(true)} />
                 )}
-                <div className="relative min-h-0 min-w-0 flex-1">
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--primary)_7%,transparent),transparent_55%)]"
-                  />
+                <div className="bg-background relative min-h-0 min-w-0 flex-1">
                   {canvasReady ? (
                     <ReactFlow
                       nodes={nodes}
@@ -785,7 +807,7 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                         <Background
                           gap={22}
                           size={1}
-                          color="color-mix(in srgb, var(--foreground) 6%, transparent)"
+                          color="color-mix(in oklch, var(--foreground) 12%, transparent)"
                         />
                       ) : null}
                       <HelperLinesOverlay lines={helperLines} />
@@ -806,19 +828,18 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                         <MiniMap
                           pannable
                           zoomable
-                          className="!bg-surface !border-border hidden sm:block"
-                          maskColor="rgb(7 13 24 / 68%)"
-                          maskStrokeColor="#5eead4"
+                          className="hidden sm:block"
+                          maskColor="oklch(0.155 0.004 265 / 70%)"
+                          maskStrokeColor="oklch(0.8 0.12 180 / 50%)"
                           maskStrokeWidth={2}
                           nodeStrokeWidth={2}
+                          nodeBorderRadius={4}
                           nodeStrokeColor={(node) =>
-                            node.selected || node.id === simStep?.nodeId ? '#5eead4' : 'transparent'
-                          }
-                          nodeColor={(node) =>
                             node.selected || node.id === simStep?.nodeId
-                              ? '#5eead4'
-                              : nodeCategoryColor(node.type)
+                              ? 'oklch(0.96 0.002 265)'
+                              : 'transparent'
                           }
+                          nodeColor={(node) => nodeCategoryColor(node.type)}
                         />
                       ) : null}
                     </ReactFlow>
@@ -869,6 +890,36 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                 edges={edges}
               />
               <ShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+              <AlertDialog
+                open={confirmDeleteOpen}
+                onOpenChange={(open) => {
+                  if (!deleteMutation.isPending) setConfirmDeleteOpen(open);
+                }}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      “{name.trim() || 'Untitled workflow'}” will be permanently deleted. This
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleteMutation.isPending}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={deleteMutation.isPending || !workflowId}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (workflowId) deleteMutation.mutate({ id: workflowId });
+                      }}
+                    >
+                      {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <CommandPalette
                 open={commandOpen}
                 onOpenChange={setCommandOpen}

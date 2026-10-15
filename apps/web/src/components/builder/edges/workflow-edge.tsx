@@ -38,8 +38,7 @@ function conditionPill(condition: FlowEdge['condition'] | undefined) {
     default:
       return {
         text: 'Always',
-        className:
-          'border-border bg-[color-mix(in_srgb,var(--muted)_70%,transparent)] text-muted-foreground',
+        className: 'border-border bg-card text-muted-foreground',
       };
   }
 }
@@ -123,7 +122,7 @@ export function WorkflowEdge({
           >
             <span
               className={cn(
-                'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide whitespace-nowrap shadow-[0_4px_12px_-8px_rgb(0_0_0_/_80%)] backdrop-blur-sm',
+                'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shadow-sm',
                 pill.className,
                 isAlways && 'opacity-80',
               )}
@@ -135,7 +134,7 @@ export function WorkflowEdge({
                 type="button"
                 title="Delete connection"
                 aria-label="Delete connection"
-                className="border-border bg-surface text-muted-foreground hover:text-destructive inline-flex size-5 items-center justify-center rounded-full border shadow-sm transition-colors"
+                className="border-border bg-card text-muted-foreground hover:text-destructive inline-flex size-5 items-center justify-center rounded-full border shadow-sm transition-colors"
                 onClick={(event) => {
                   event.stopPropagation();
                   edgeActions.onDeleteEdge(id);

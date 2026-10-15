@@ -51,7 +51,7 @@ export function BuilderContextMenu({
       ref={ref}
       role="menu"
       aria-label="Context menu"
-      className="border-border bg-popover fixed z-50 min-w-[11rem] overflow-hidden rounded-xl border py-1 shadow-[0_16px_40px_-20px_rgb(0_0_0_/_80%)]"
+      className="border-border bg-popover fixed z-50 min-w-44 overflow-hidden rounded-lg border p-1 shadow-lg"
       style={{ left: x, top: y }}
     >
       {items.map((item) => (
@@ -66,16 +66,14 @@ export function BuilderContextMenu({
             onClose();
           }}
           className={cn(
-            'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors',
-            item.disabled && 'cursor-not-allowed opacity-40',
-            item.danger
-              ? 'text-destructive hover:bg-destructive/10'
-              : 'text-muted-foreground hover:bg-surface-elevated hover:text-foreground',
+            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+            item.disabled && 'cursor-not-allowed opacity-50',
+            item.danger ? 'text-destructive hover:bg-destructive/10' : 'hover:bg-accent',
           )}
         >
           <span className="flex-1">{item.label}</span>
           {item.hint ? (
-            <span className="text-muted-foreground/50 font-mono text-[10px]">{item.hint}</span>
+            <span className="text-muted-foreground font-mono text-xs">{item.hint}</span>
           ) : null}
         </button>
       ))}

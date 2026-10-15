@@ -1,9 +1,10 @@
 'use client';
 
-import { Expand, Grid3x3, LayoutGrid, Minus, Plus, Redo2, Undo2 } from 'lucide-react';
+import { Grid3x3, LayoutGrid, Maximize, Minus, Plus, Redo2, Undo2 } from 'lucide-react';
 import { Panel, useReactFlow, useStore } from '@xyflow/react';
 
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { WithTooltip } from '@/components/ui/with-tooltip';
 import { cn } from '@/lib/utils';
 
@@ -25,14 +26,12 @@ function ToolbarButton({
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon-sm"
         disabled={disabled}
         onClick={onClick}
         aria-label={label}
-        className={cn(
-          'text-muted-foreground hover:text-foreground h-7 rounded-md px-2',
-          active && 'bg-muted text-foreground',
-        )}
+        aria-pressed={active}
+        className={cn('text-muted-foreground', active && 'bg-accent text-foreground')}
       >
         {children}
       </Button>
@@ -62,43 +61,43 @@ export function CanvasToolbar({
   return (
     <Panel
       position="top-left"
-      className="!m-3 flex items-center gap-0.5 rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-1 py-1 shadow-[0_8px_24px_-16px_rgb(0_0_0_/_70%)] backdrop-blur-sm"
+      className="bg-card !m-3 flex h-9 items-center gap-0.5 rounded-lg border px-1 shadow-sm"
     >
-      <ToolbarButton label="Fit view" onClick={() => void fitView({ padding: 0.2, duration: 200 })}>
-        <Expand className="size-3.5" />
-        <span className="ml-1 text-[11px]">Fit view</span>
-      </ToolbarButton>
       <ToolbarButton label="Undo (⌘Z)" disabled={!canUndo} onClick={onUndo}>
-        <Undo2 className="size-3.5" />
+        <Undo2 />
       </ToolbarButton>
       <ToolbarButton label="Redo (⌘⇧Z)" disabled={!canRedo} onClick={onRedo}>
-        <Redo2 className="size-3.5" />
-      </ToolbarButton>
-      <ToolbarButton label="Auto layout (soon)" disabled onClick={() => undefined}>
-        <LayoutGrid className="size-3.5" />
-        <span className="ml-1 hidden text-[11px] sm:inline">Auto layout</span>
+        <Redo2 />
       </ToolbarButton>
 
-      <span className="bg-border mx-1 h-4 w-px" aria-hidden />
+      <Separator orientation="vertical" className="mx-1 h-4!" />
 
       <ToolbarButton label="Zoom out" onClick={() => void zoomOut({ duration: 120 })}>
-        <Minus className="size-3.5" />
+        <Minus />
       </ToolbarButton>
       <span
-        className="text-muted-foreground min-w-[2.75rem] text-center font-mono text-[11px] tabular-nums"
+        className="text-muted-foreground w-11 text-center font-mono text-xs tabular-nums"
         title="Current zoom"
       >
         {zoomPercent}%
       </span>
       <ToolbarButton label="Zoom in" onClick={() => void zoomIn({ duration: 120 })}>
-        <Plus className="size-3.5" />
+        <Plus />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Fit to screen"
+        onClick={() => void fitView({ padding: 0.2, duration: 200 })}
+      >
+        <Maximize />
       </ToolbarButton>
 
-      <span className="bg-border mx-1 h-4 w-px" aria-hidden />
+      <Separator orientation="vertical" className="mx-1 h-4!" />
 
       <ToolbarButton label="Toggle grid" onClick={onToggleGrid} active={showGrid}>
-        <Grid3x3 className="size-3.5" />
-        <span className="ml-1 hidden text-[11px] sm:inline">Grid</span>
+        <Grid3x3 />
+      </ToolbarButton>
+      <ToolbarButton label="Auto layout (coming soon)" disabled onClick={() => undefined}>
+        <LayoutGrid />
       </ToolbarButton>
     </Panel>
   );

@@ -52,20 +52,14 @@ export function BuilderSettingsPopover({
     <DropdownMenu>
       <WithTooltip label="Settings">
         <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="rounded-lg"
-            aria-label="Builder settings"
-          >
-            <Settings2 className="size-4" />
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Builder settings">
+            <Settings2 />
           </Button>
         </DropdownMenuTrigger>
       </WithTooltip>
-      <DropdownMenuContent align="end" className="z-[1100] min-w-56">
-        <DropdownMenuLabel className="text-muted-foreground text-[10px] tracking-[0.12em] uppercase">
-          Preferences
+      <DropdownMenuContent align="end" className="z-[1100] w-56">
+        <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
+          Canvas
         </DropdownMenuLabel>
         {items.map((item) => (
           <DropdownMenuCheckboxItem
@@ -76,7 +70,7 @@ export function BuilderSettingsPopover({
           >
             <span className="flex-1">{item.label}</span>
             {item.hint ? (
-              <span className="text-muted-foreground/60 ml-2 text-[10px]">{item.hint}</span>
+              <span className="text-muted-foreground ml-2 text-xs">{item.hint}</span>
             ) : null}
           </DropdownMenuCheckboxItem>
         ))}

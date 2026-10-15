@@ -4,7 +4,14 @@ import postgres from 'postgres';
 import * as schema from '@/db/schema';
 import { env } from '@/lib/env';
 
-const client = postgres(env.DATABASE_URL);
+// Dev hot reloads re-evaluate this module; reuse one pool so connections don't pile up.
+const globalForDb = globalThis as unknown as { pgClient?: ReturnType<typeof postgres> };
+
+const client = globalForDb.pgClient ?? postgres(env.DATABASE_URL);
+
+if (env.NODE_ENV !== 'production') {
+  globalForDb.pgClient = client;
+}
 
 export const db = drizzle(client, { schema });
 

@@ -1,13 +1,18 @@
 'use client';
 
+import type { WorkflowNodeType } from '@devflow/shared';
 import { Check, CircleAlert, Copy, TriangleAlert, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { WithTooltip } from '@/components/ui/with-tooltip';
 import { cn } from '@/lib/utils';
 
 import { cliRunCommand, estimateExecutionSteps } from './node-meta';
-import { nodeTypeLabel } from './nodes/base-node';
+import { nodeIconToneClass, nodeTypeLabel } from './nodes/base-node';
+import { NodeTypeIcon } from './nodes/node-icons';
 import type { BuilderEdge, BuilderNode } from './workflow-serialize';
 import type { ValidationStatus, WorkflowValidation } from './workflow-validation';
 
@@ -21,6 +26,15 @@ function formatLastSaved(value: Date | string | null | undefined) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function PanelSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 p-4">
+      <h3 className="text-muted-foreground text-xs font-medium">{title}</h3>
+      {children}
+    </section>
+  );
 }
 
 export function WorkflowSummaryPanel({
@@ -45,25 +59,21 @@ export function WorkflowSummaryPanel({
   const estimatedSteps = estimateExecutionSteps(nodes, edges);
 
   const typeBreakdown = useMemo(() => {
-    const counts = new Map<string, number>();
+    const counts = new Map<WorkflowNodeType, number>();
     for (const node of nodes) {
-      const type = node.type ?? 'command';
+      const type = (node.type ?? 'command') as WorkflowNodeType;
       counts.set(type, (counts.get(type) ?? 0) + 1);
     }
     return [...counts.entries()]
-      .map(([type, count]) => ({
-        label: nodeTypeLabel(type as Parameters<typeof nodeTypeLabel>[0]),
-        count,
-      }))
+      .map(([type, count]) => ({ type, label: nodeTypeLabel(type), count }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   }, [nodes]);
 
   const stats = [
-    { label: 'Total Nodes', value: String(nodes.length) },
-    { label: 'Total Connections', value: String(edges.length) },
-    { label: 'Estimated Execution Steps', value: String(estimatedSteps) },
-    { label: 'Workflow Version', value: `v${version}` },
-    { label: 'Last Saved', value: formatLastSaved(lastSavedAt) },
+    { label: 'Nodes', value: String(nodes.length) },
+    { label: 'Connections', value: String(edges.length) },
+    { label: 'Steps on main path', value: String(estimatedSteps) },
+    { label: 'Version', value: `v${version}` },
   ];
 
   async function copyCommand() {
@@ -76,96 +86,50 @@ export function WorkflowSummaryPanel({
     }
   }
 
+  const issues = validation.checks.filter((check) => check.severity !== 'pass');
+  const passes = validation.checks.filter((check) => check.severity === 'pass');
+
   return (
-    <div className="flex flex-col gap-6 overflow-y-auto p-5">
-      <div>
-        <p className="text-muted-foreground text-[10px] font-medium tracking-[0.14em] uppercase">
-          Workflow Summary
-        </p>
-        <dl className="mt-3 flex flex-col gap-2.5">
+    <div className="flex flex-col">
+      <PanelSection title="Overview">
+        <dl className="grid grid-cols-2 gap-2">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex items-baseline justify-between gap-3">
+            <div key={stat.label} className="bg-card flex flex-col gap-1 rounded-lg border p-3">
               <dt className="text-muted-foreground text-xs">{stat.label}</dt>
-              <dd className="text-foreground text-xs font-medium tabular-nums">{stat.value}</dd>
+              <dd className="text-lg leading-none font-semibold tabular-nums">{stat.value}</dd>
             </div>
           ))}
         </dl>
-      </div>
-
-      <div>
-        <p className="text-muted-foreground text-[10px] font-medium tracking-[0.14em] uppercase">
-          Node Type Breakdown
+        <p className="text-muted-foreground text-xs">
+          Last saved <span className="text-foreground">{formatLastSaved(lastSavedAt)}</span>
         </p>
-        <ul className="mt-3 flex flex-col gap-1.5">
-          {typeBreakdown.length === 0 ? (
-            <li className="text-muted-foreground text-xs">No nodes yet</li>
-          ) : (
-            typeBreakdown.map((item) => (
-              <li
-                key={item.label}
-                className="text-muted-foreground flex items-center justify-between gap-3 text-xs"
-              >
-                <span>{item.label}</span>
-                <span className="text-foreground tabular-nums">{item.count}</span>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
+      </PanelSection>
 
-      <div>
-        <p className="text-muted-foreground text-[10px] font-medium tracking-[0.14em] uppercase">
-          CLI Command
-        </p>
-        <div className="border-border/60 bg-background/30 mt-3 flex items-center gap-2 rounded-xl border px-2.5 py-2">
-          <code
-            className="text-foreground/90 flex-1 truncate font-mono text-[11px]"
-            title={command}
-          >
-            {command}
-          </code>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 shrink-0 rounded-lg px-2 text-xs"
-            onClick={() => void copyCommand()}
-            title="Copy CLI command"
-          >
-            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-            {copied ? 'Copied' : 'Copy'}
-          </Button>
+      <Separator />
+
+      <PanelSection title="Validation">
+        <div className="flex items-center justify-between">
+          <ValidationBadge status={validation.status} />
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {passes.length}/{validation.checks.length} checks passed
+          </span>
         </div>
-      </div>
-
-      <div>
-        <p className="text-muted-foreground text-[10px] font-medium tracking-[0.14em] uppercase">
-          Validation
-        </p>
-        {validation.status === 'valid' ? (
-          <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-            Everything looks good.
-          </p>
-        ) : null}
-        <ul className="mt-3 flex flex-col gap-2">
-          {validation.checks.map((check) => {
+        <ul className="flex flex-col gap-1">
+          {[...issues, ...passes].map((check) => {
             const clickable = Boolean(check.nodeId && onFocusNode && check.severity !== 'pass');
             const content = (
               <>
                 {check.severity === 'pass' ? (
                   <Check className="text-success mt-0.5 size-3.5 shrink-0" strokeWidth={2.5} />
                 ) : check.severity === 'warn' ? (
-                  <TriangleAlert
-                    className="text-warning mt-0.5 size-3.5 shrink-0"
-                    strokeWidth={2.5}
-                  />
+                  <TriangleAlert className="text-warning mt-0.5 size-3.5 shrink-0" />
                 ) : (
                   <X className="text-destructive mt-0.5 size-3.5 shrink-0" strokeWidth={2.5} />
                 )}
                 <span
                   className={cn(
+                    'text-left',
                     check.severity === 'pass' ? 'text-muted-foreground' : 'text-foreground',
-                    clickable && 'hover:text-primary underline-offset-2 hover:underline',
                   )}
                 >
                   {check.label}
@@ -178,20 +142,66 @@ export function WorkflowSummaryPanel({
                 {clickable ? (
                   <button
                     type="button"
-                    className="flex w-full items-start gap-2 text-left text-xs transition-colors"
+                    className="hover:bg-accent focus-visible:ring-ring/50 -mx-2 flex w-[calc(100%+1rem)] items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors outline-none focus-visible:ring-3"
                     onClick={() => onFocusNode?.(check.nodeId!)}
-                    title="Focus node"
+                    title="Show on canvas"
                   >
                     {content}
                   </button>
                 ) : (
-                  <div className="flex items-start gap-2 text-xs">{content}</div>
+                  <div className="flex items-start gap-2 py-1.5 text-sm">{content}</div>
                 )}
               </li>
             );
           })}
         </ul>
-      </div>
+      </PanelSection>
+
+      <Separator />
+
+      <PanelSection title="Run from the terminal">
+        <div className="bg-card flex h-9 items-center gap-2 rounded-lg border pr-1 pl-3">
+          <code className="flex-1 truncate font-mono text-xs" title={command}>
+            {command}
+          </code>
+          <WithTooltip label={copied ? 'Copied' : 'Copy command'} side="left">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => void copyCommand()}
+              aria-label="Copy CLI command"
+            >
+              {copied ? <Check className="text-success" /> : <Copy />}
+            </Button>
+          </WithTooltip>
+        </div>
+      </PanelSection>
+
+      <Separator />
+
+      <PanelSection title="Node types">
+        {typeBreakdown.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No nodes yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {typeBreakdown.map((item) => (
+              <li key={item.type} className="flex items-center gap-2.5 text-sm">
+                <span
+                  className={cn(
+                    'inline-flex size-5 shrink-0 items-center justify-center rounded',
+                    nodeIconToneClass(item.type),
+                  )}
+                >
+                  <NodeTypeIcon type={item.type} className="size-3" strokeWidth={2.25} />
+                </span>
+                <span className="flex-1">{item.label}</span>
+                <span className="text-muted-foreground tabular-nums">{item.count}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PanelSection>
     </div>
   );
 }
@@ -199,35 +209,29 @@ export function WorkflowSummaryPanel({
 export function ValidationBadge({ status }: { status: ValidationStatus }) {
   const config =
     status === 'valid'
-      ? {
-          label: 'Valid',
-          icon: Check,
-          className: 'border-success/25 bg-success/10 text-success',
-        }
+      ? { label: 'Valid', icon: Check, className: 'border-success/30 bg-success/10 text-success' }
       : status === 'warnings'
         ? {
             label: 'Warnings',
             icon: CircleAlert,
-            className: 'border-warning/25 bg-warning/10 text-warning',
+            className: 'border-warning/30 bg-warning/10 text-warning',
           }
         : {
             label: 'Invalid',
             icon: X,
-            className: 'border-destructive/25 bg-destructive/10 text-destructive',
+            className: 'border-destructive/30 bg-destructive/10 text-destructive',
           };
 
   const Icon = config.icon;
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
-        config.className,
-      )}
+    <Badge
+      variant="outline"
+      className={config.className}
       title="Workflow validation — editing is never blocked"
     >
-      <Icon className="size-3" strokeWidth={2.5} />
+      <Icon data-icon="inline-start" strokeWidth={2.5} />
       {config.label}
-    </span>
+    </Badge>
   );
 }
