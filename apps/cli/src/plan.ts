@@ -12,6 +12,7 @@ export type PlanStep = {
   requiresSudo: boolean;
   expectedExitCode: number | null;
   failureMessage: string | null;
+  skipIfCommand: string | null;
 };
 
 export type PlanResult =
@@ -105,35 +106,46 @@ function stepFor(
           ? `skipped on this machine (${host})`
           : null;
       const sudo = node.requiresSudo ? 'requires sudo' : null;
+      const platformSkipped = Boolean(skipped);
+      const skipIf = platformSkipped ? null : skipIfOf(node);
       return {
         ok: true,
-        step: step(node, command, skipped ?? sudo, {
-          skipped: Boolean(skipped),
+        step: step(node, command, platformSkipped ? skipped : joinNotes(sudo, skipIfNote(skipIf)), {
+          skipped: platformSkipped,
           requiresSudo: node.requiresSudo,
           expectedExitCode: 0,
+          skipIfCommand: skipIf,
         }),
       };
     }
     case 'install': {
       const command = installCommand(node);
       if (typeof command !== 'string') return command;
+      const skipIf = skipIfOf(node);
       return {
         ok: true,
-        step: step(node, command, node.requiresSudo ? 'requires sudo' : null, {
-          requiresSudo: node.requiresSudo,
-          expectedExitCode: 0,
-        }),
+        step: step(
+          node,
+          command,
+          joinNotes(node.requiresSudo ? 'requires sudo' : null, skipIfNote(skipIf)),
+          {
+            requiresSudo: node.requiresSudo,
+            expectedExitCode: 0,
+            skipIfCommand: skipIf,
+          },
+        ),
       };
     }
     case 'gitClone': {
       const directory = node.data.targetDir ? ` ${shellQuote(node.data.targetDir)}` : '';
+      const skipIf = skipIfOf(node);
       return {
         ok: true,
         step: step(
           node,
           `git clone ${shellQuote(node.data.repoUrl)}${directory}`,
-          node.requiresSudo ? 'requires sudo' : null,
-          { requiresSudo: node.requiresSudo, expectedExitCode: 0 },
+          joinNotes(node.requiresSudo ? 'requires sudo' : null, skipIfNote(skipIf)),
+          { requiresSudo: node.requiresSudo, expectedExitCode: 0, skipIfCommand: skipIf },
         ),
       };
     }
@@ -207,6 +219,7 @@ function step(
     requiresSudo?: boolean;
     expectedExitCode?: number | null;
     failureMessage?: string | null;
+    skipIfCommand?: string | null;
   } = {},
 ): PlanStep {
   return {
@@ -219,7 +232,24 @@ function step(
     requiresSudo: extra.requiresSudo ?? false,
     expectedExitCode: extra.expectedExitCode ?? null,
     failureMessage: extra.failureMessage ?? null,
+    skipIfCommand: extra.skipIfCommand ?? null,
   };
+}
+
+function skipIfOf(
+  node: Extract<FlowNode, { type: 'command' | 'install' | 'gitClone' }>,
+): string | null {
+  const command = node.skipIfCommand?.trim();
+  return command || null;
+}
+
+function skipIfNote(command: string | null): string | null {
+  return command ? `skip if: ${command}` : null;
+}
+
+function joinNotes(...parts: Array<string | null>): string | null {
+  const notes = parts.filter((part): part is string => Boolean(part));
+  return notes.length > 0 ? notes.join('\n') : null;
 }
 
 function shellQuote(value: string): string {

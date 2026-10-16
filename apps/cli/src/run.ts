@@ -6,7 +6,10 @@ export type CommandResult = {
   stderr: string;
 };
 
-export type CommandRunner = (command: string) => Promise<CommandResult>;
+export type CommandRunner = (
+  command: string,
+  options?: { stream?: boolean },
+) => Promise<CommandResult>;
 
 export type RunHooks = {
   onMarker?: (step: PlanStep) => void;
@@ -40,6 +43,18 @@ export async function executePlan(
     if (step.skipped) {
       hooks.onSkip?.(step);
       continue;
+    }
+
+    if (step.skipIfCommand) {
+      const check = await runner(step.skipIfCommand, { stream: false });
+      if (check.exitCode === 0) {
+        hooks.onSkip?.({
+          ...step,
+          skipped: true,
+          note: `skipped, skip if exited 0\n${step.skipIfCommand}`,
+        });
+        continue;
+      }
     }
 
     hooks.onStart?.(step);

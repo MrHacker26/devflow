@@ -175,6 +175,98 @@ describe('executePlan', () => {
       message: '"Install git" requires sudo, which is not supported yet.',
     });
   });
+
+  test('skips a step when its skip check exits 0', async () => {
+    const calls: Array<[string, boolean]> = [];
+    const result = await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'install',
+            type: 'install',
+            skipIfCommand: 'command -v bun',
+            data: { label: 'Install Bun', packageManager: 'brew', packages: ['oven-sh/bun/bun'] },
+          },
+          {
+            id: 'echo',
+            type: 'command',
+            data: { label: 'Hello', command: 'echo hello', platform: 'all' },
+          },
+        ],
+        [
+          { id: 'e1', source: 'start', target: 'install', condition: 'always' },
+          { id: 'e2', source: 'install', target: 'echo', condition: 'always' },
+        ],
+      ),
+      async (command, options) => {
+        calls.push([command, options?.stream ?? true]);
+        return ok();
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(calls).toEqual([
+      ['command -v bun', false],
+      ['echo hello', true],
+    ]);
+  });
+
+  test('runs a step when its skip check exits non-zero', async () => {
+    const calls: string[] = [];
+    const result = await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'clone',
+            type: 'gitClone',
+            skipIfCommand: 'test -d ~/src/devflow',
+            data: {
+              label: 'Clone repo',
+              repoUrl: 'https://github.com/example/devflow.git',
+              targetDir: '~/src/devflow',
+            },
+          },
+        ],
+        [{ id: 'e1', source: 'start', target: 'clone', condition: 'always' }],
+      ),
+      async (command) => {
+        calls.push(command);
+        return command.startsWith('test ') ? { exitCode: 1, stdout: '', stderr: '' } : ok();
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(calls).toEqual([
+      'test -d ~/src/devflow',
+      'git clone https://github.com/example/devflow.git ~/src/devflow',
+    ]);
+  });
+
+  test('does not run a skip check for a platform-skipped step', async () => {
+    const calls: string[] = [];
+    await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'mac-only',
+            type: 'command',
+            skipIfCommand: 'command -v brew',
+            data: { label: 'Brew', command: 'brew update', platform: 'mac' },
+          },
+        ],
+        [{ id: 'e1', source: 'start', target: 'mac-only', condition: 'always' }],
+      ),
+      async (command) => {
+        calls.push(command);
+        return ok();
+      },
+    );
+
+    expect(calls).toEqual([]);
+  });
 });
 
 describe('runShell', () => {
