@@ -47,6 +47,6 @@ bun apps/cli/src/index.ts run apps/cli/examples/toolchain.json --dry-run
 bun apps/cli/src/index.ts run ./workflow.json
 ```
 
-This follows the happy path (`always`, then `on-success`). `prompt`, `if`, `sshKey`, `env`, and steps that require sudo stop the run. `--dry-run` prints the commands without executing them.
+This follows the happy path (`always`, then `on-success`). A `skipIfCommand` that exits 0 skips that step. `prompt`, `if`, `sshKey`, `env`, and steps that require sudo stop the run. `--dry-run` prints the commands, including `skip if`, without executing them.
 
 More details: [`apps/web/README.md`](apps/web/README.md) and [`packages/shared/README.md`](packages/shared/README.md).

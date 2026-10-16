@@ -91,7 +91,7 @@ async function main() {
     return;
   }
 
-  const result = await executePlan(plan.steps, (command) => runShell(command), {
+  const result = await executePlan(plan.steps, (command, options) => runShell(command, options), {
     onMarker: (step) => log.info(step.label),
     onSkip: printStep,
     onStart: printStep,

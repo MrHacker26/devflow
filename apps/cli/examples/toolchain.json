@@ -8,6 +8,7 @@
     {
       "id": "install-bun",
       "type": "install",
+      "skipIfCommand": "command -v bun",
       "requiresSudo": false,
       "data": {
         "label": "Install Bun",
@@ -18,6 +19,7 @@
     {
       "id": "clone",
       "type": "gitClone",
+      "skipIfCommand": "test -d ~/src/devflow",
       "requiresSudo": false,
       "data": {
         "label": "Clone repo",

@@ -28,6 +28,9 @@ describe('planWorkflow', () => {
       'bun --version',
       null,
     ]);
+    expect(plan.steps[1]?.note).toBe('skip if: command -v bun');
+    expect(plan.steps[1]?.skipped).toBe(false);
+    expect(plan.steps[2]?.note).toBe('skip if: test -d ~/src/devflow');
   });
 
   test('prints the happy path for supported nodes', () => {
