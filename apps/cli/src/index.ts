@@ -2,7 +2,7 @@
 import { readFile, stat } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 
-import { cancel, intro, log, outro } from '@clack/prompts';
+import { cancel, intro, isCancel, log, outro, text } from '@clack/prompts';
 import { workflowSchema, type Workflow } from '@devflow/shared';
 
 import { planWorkflow, type PlanStep } from './plan';
@@ -79,11 +79,16 @@ async function main() {
     return;
   }
 
-  const result = await executePlan(plan.steps, (command, options) => runShell(command, options), {
-    onMarker: (step) => log.info(step.label),
-    onSkip: printStep,
-    onStart: printStep,
-  });
+  const result = await executePlan(
+    plan.steps,
+    (shellCommand, options) => runShell(shellCommand, options),
+    {
+      onMarker: (step) => log.info(step.label),
+      onSkip: printStep,
+      onStart: printStep,
+      onPrompt: ask,
+    },
+  );
   if (!result.ok) {
     fail(result.message);
     return;
@@ -131,7 +136,25 @@ async function fileExists(target: string) {
   }
 }
 
+async function ask(step: PlanStep) {
+  const question = step.prompt?.question;
+  if (!question) return { ok: false as const, message: `"${step.label}" needs an answer.` };
+
+  const answer = await text({
+    message: question,
+    validate: (value) => (value?.trim() ? undefined : 'Enter a value.'),
+  });
+  if (isCancel(answer)) return { ok: false as const, message: 'Prompt cancelled.' };
+
+  log.info(`${step.label}: ${answer.trim()}`);
+  return { ok: true as const, value: answer.trim() };
+}
+
 function printStep(step: PlanStep) {
+  if (step.prompt) {
+    log.step(`${step.label}\n${step.note}`);
+    return;
+  }
   if (!step.command) {
     log.info(step.label);
     return;
