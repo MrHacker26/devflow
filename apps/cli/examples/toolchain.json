@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "id": "toolchain",
+  "name": "Toolchain check",
+  "description": "Install Bun, clone a repo, and verify the toolchain.",
+  "nodes": [
+    { "id": "start", "type": "start", "data": { "label": "Start" } },
+    {
+      "id": "install-bun",
+      "type": "install",
+      "requiresSudo": false,
+      "data": {
+        "label": "Install Bun",
+        "packageManager": "brew",
+        "packages": ["oven-sh/bun/bun"]
+      }
+    },
+    {
+      "id": "clone",
+      "type": "gitClone",
+      "requiresSudo": false,
+      "data": {
+        "label": "Clone repo",
+        "repoUrl": "https://github.com/example/devflow.git",
+        "targetDir": "~/src/devflow"
+      }
+    },
+    {
+      "id": "verify",
+      "type": "verify",
+      "data": {
+        "label": "Verify Bun",
+        "command": "bun --version",
+        "expectedExitCode": 0,
+        "failureMessage": "Bun is not available on PATH."
+      }
+    },
+    { "id": "end", "type": "end", "data": { "label": "Done" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start", "target": "install-bun", "condition": "always" },
+    { "id": "e2", "source": "install-bun", "target": "clone", "condition": "always" },
+    { "id": "e3", "source": "clone", "target": "verify", "condition": "on-success" },
+    { "id": "e4", "source": "verify", "target": "end", "condition": "on-success" }
+  ],
+  "layout": {}
+}
