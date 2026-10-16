@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderKanban, LoaderCircle, LogOut, Plus } from 'lucide-react';
+import { FolderKanban, LogOut, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -249,8 +249,12 @@ function SignedInMenu({
           </form>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={creating}>Cancel</AlertDialogCancel>
-            <Button type="submit" form="create-organization" disabled={creating || !name.trim()}>
-              {creating ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : null}
+            <Button
+              type="submit"
+              form="create-organization"
+              disabled={!name.trim()}
+              loading={creating}
+            >
               Create
             </Button>
           </AlertDialogFooter>
