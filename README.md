@@ -2,7 +2,7 @@
 
 A visual builder for developer onboarding workflows. Drag together steps like "install Homebrew packages", "generate an SSH key" and "clone the repo", and DevFlow saves them as a versioned workflow.
 
-> Early development. The builder, dashboard, and accounts work. The CLI can dry-run a workflow file. It does not execute steps yet.
+> Early development. The builder, dashboard, and accounts work. The CLI runs a workflow file for `start`, `command`, `install`, `gitClone`, `verify`, `wait`, and `end`.
 
 ## Quick start
 
@@ -32,7 +32,7 @@ Open [http://localhost:3000](http://localhost:3000) and sign up. To add demo wor
 
 ```
 apps/web          Next.js app (builder, dashboard, auth, API)
-apps/cli          Workflow dry-run (`devflow run <file> --dry-run`)
+apps/cli          Workflow runner (`devflow run <file>`)
 packages/shared   Workflow schema and types, shared by the web app and CLI
 ```
 
@@ -44,8 +44,9 @@ From the repo root:
 
 ```sh
 bun apps/cli/src/index.ts run apps/cli/examples/toolchain.json --dry-run
+bun apps/cli/src/index.ts run ./workflow.json
 ```
 
-This prints the happy path (`always`, then `on-success`) for `start`, `command`, `install`, `gitClone`, `verify`, `wait`, and `end`. `prompt`, `if`, `sshKey`, and `env` stop the run. Nothing is executed.
+This follows the happy path (`always`, then `on-success`). `prompt`, `if`, `sshKey`, `env`, and steps that require sudo stop the run. `--dry-run` prints the commands without executing them.
 
 More details: [`apps/web/README.md`](apps/web/README.md) and [`packages/shared/README.md`](packages/shared/README.md).

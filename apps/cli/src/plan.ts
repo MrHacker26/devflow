@@ -8,6 +8,10 @@ export type PlanStep = {
   label: string;
   command: string | null;
   note: string | null;
+  skipped: boolean;
+  requiresSudo: boolean;
+  expectedExitCode: number | null;
+  failureMessage: string | null;
 };
 
 export type PlanResult =
@@ -55,7 +59,7 @@ export function planWorkflow(
     if (!supported.has(current.type)) {
       return {
         ok: false,
-        message: `"${current.data.label}" (${current.type}) is not supported yet. This version dry-runs start, command, install, gitClone, verify, wait, and end.`,
+        message: `"${current.data.label}" (${current.type}) is not supported yet. This version runs start, command, install, gitClone, verify, wait, and end.`,
       };
     }
 
@@ -101,12 +105,25 @@ function stepFor(
           ? `skipped on this machine (${host})`
           : null;
       const sudo = node.requiresSudo ? 'requires sudo' : null;
-      return { ok: true, step: step(node, command, skipped ?? sudo) };
+      return {
+        ok: true,
+        step: step(node, command, skipped ?? sudo, {
+          skipped: Boolean(skipped),
+          requiresSudo: node.requiresSudo,
+          expectedExitCode: 0,
+        }),
+      };
     }
     case 'install': {
       const command = installCommand(node);
       if (typeof command !== 'string') return command;
-      return { ok: true, step: step(node, command, node.requiresSudo ? 'requires sudo' : null) };
+      return {
+        ok: true,
+        step: step(node, command, node.requiresSudo ? 'requires sudo' : null, {
+          requiresSudo: node.requiresSudo,
+          expectedExitCode: 0,
+        }),
+      };
     }
     case 'gitClone': {
       const directory = node.data.targetDir ? ` ${shellQuote(node.data.targetDir)}` : '';
@@ -116,6 +133,7 @@ function stepFor(
           node,
           `git clone ${shellQuote(node.data.repoUrl)}${directory}`,
           node.requiresSudo ? 'requires sudo' : null,
+          { requiresSudo: node.requiresSudo, expectedExitCode: 0 },
         ),
       };
     }
@@ -126,14 +144,20 @@ function stepFor(
       const failure = node.data.failureMessage?.trim();
       return {
         ok: true,
-        step: step(node, command, failure ? `${expected}. ${failure}` : expected),
+        step: step(node, command, failure ? `${expected}. ${failure}` : expected, {
+          expectedExitCode: node.data.expectedExitCode,
+          failureMessage: failure ?? null,
+        }),
       };
     }
     case 'wait': {
       if (!Number.isFinite(node.data.seconds) || node.data.seconds < 0) {
         return { ok: false, message: `"${node.data.label}" has an invalid wait.` };
       }
-      return { ok: true, step: step(node, `sleep ${node.data.seconds}`, null) };
+      return {
+        ok: true,
+        step: step(node, `sleep ${node.data.seconds}`, null, { expectedExitCode: 0 }),
+      };
     }
     case 'sshKey':
     case 'env':
@@ -174,13 +198,27 @@ function installCommand(
   }
 }
 
-function step(node: FlowNode, command: string | null, note: string | null): PlanStep {
+function step(
+  node: FlowNode,
+  command: string | null,
+  note: string | null,
+  extra: {
+    skipped?: boolean;
+    requiresSudo?: boolean;
+    expectedExitCode?: number | null;
+    failureMessage?: string | null;
+  } = {},
+): PlanStep {
   return {
     id: node.id,
     type: node.type,
     label: node.data.label,
     command,
     note,
+    skipped: extra.skipped ?? false,
+    requiresSudo: extra.requiresSudo ?? false,
+    expectedExitCode: extra.expectedExitCode ?? null,
+    failureMessage: extra.failureMessage ?? null,
   };
 }
 

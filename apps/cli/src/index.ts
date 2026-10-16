@@ -6,10 +6,12 @@ import { cancel, intro, log, outro } from '@clack/prompts';
 import { workflowSchema } from '@devflow/shared';
 
 import { planWorkflow, type PlanStep } from './plan';
+import { executePlan, runShell } from './run';
 
 const usage = `DevFlow CLI
 
 Usage:
+  devflow run <workflow.json>
   devflow run <workflow.json> --dry-run
 
 Options:
@@ -51,11 +53,6 @@ async function main() {
     return;
   }
 
-  if (!dryRun) {
-    fail('Execution is not implemented yet. Re-run with --dry-run.');
-    return;
-  }
-
   let raw: string;
   try {
     raw = await readFile(file, 'utf8');
@@ -88,10 +85,22 @@ async function main() {
   }
 
   intro(plan.name);
-  for (const step of plan.steps) {
-    printStep(step);
+  if (dryRun) {
+    for (const step of plan.steps) printStep(step);
+    outro('Dry run complete. Nothing was executed.');
+    return;
   }
-  outro('Dry run complete. Nothing was executed.');
+
+  const result = await executePlan(plan.steps, (command) => runShell(command), {
+    onMarker: (step) => log.info(step.label),
+    onSkip: printStep,
+    onStart: printStep,
+  });
+  if (!result.ok) {
+    fail(result.message);
+    return;
+  }
+  outro('Done.');
 }
 
 function printStep(step: PlanStep) {
@@ -101,7 +110,7 @@ function printStep(step: PlanStep) {
   }
 
   const detail = step.note ? `${step.command}\n${step.note}` : step.command;
-  if (step.note?.startsWith('skipped')) {
+  if (step.skipped) {
     log.warn(`${step.label}\n${detail}`);
     return;
   }
