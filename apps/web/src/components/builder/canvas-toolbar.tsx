@@ -12,13 +12,13 @@ function ToolbarButton({
   label,
   disabled,
   onClick,
-  children,
+  icon,
   active,
 }: {
   label: string;
   disabled?: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  icon: React.ReactElement<{ className?: string }>;
   active?: boolean;
 }) {
   return (
@@ -27,14 +27,13 @@ function ToolbarButton({
         type="button"
         variant="ghost"
         size="icon-sm"
+        icon={icon}
         disabled={disabled}
         onClick={onClick}
         aria-label={label}
         aria-pressed={active}
         className={cn('text-muted-foreground', active && 'bg-accent text-foreground')}
-      >
-        {children}
-      </Button>
+      />
     </WithTooltip>
   );
 }
@@ -63,42 +62,47 @@ export function CanvasToolbar({
       position="top-left"
       className="bg-card !m-3 flex h-9 items-center gap-0.5 rounded-lg border px-1 shadow-sm"
     >
-      <ToolbarButton label="Undo (⌘Z)" disabled={!canUndo} onClick={onUndo}>
-        <Undo2 />
-      </ToolbarButton>
-      <ToolbarButton label="Redo (⌘⇧Z)" disabled={!canRedo} onClick={onRedo}>
-        <Redo2 />
-      </ToolbarButton>
+      <ToolbarButton label="Undo (⌘Z)" disabled={!canUndo} onClick={onUndo} icon={<Undo2 />} />
+      <ToolbarButton label="Redo (⌘⇧Z)" disabled={!canRedo} onClick={onRedo} icon={<Redo2 />} />
 
       <Separator orientation="vertical" className="mx-1 h-4!" />
 
-      <ToolbarButton label="Zoom out" onClick={() => void zoomOut({ duration: 120 })}>
-        <Minus />
-      </ToolbarButton>
+      <ToolbarButton
+        label="Zoom out"
+        onClick={() => void zoomOut({ duration: 120 })}
+        icon={<Minus />}
+      />
       <span
         className="text-muted-foreground w-11 text-center font-mono text-xs tabular-nums"
         title="Current zoom"
       >
         {zoomPercent}%
       </span>
-      <ToolbarButton label="Zoom in" onClick={() => void zoomIn({ duration: 120 })}>
-        <Plus />
-      </ToolbarButton>
+      <ToolbarButton
+        label="Zoom in"
+        onClick={() => void zoomIn({ duration: 120 })}
+        icon={<Plus />}
+      />
       <ToolbarButton
         label="Fit to screen"
         onClick={() => void fitView({ padding: 0.2, duration: 200 })}
-      >
-        <Maximize />
-      </ToolbarButton>
+        icon={<Maximize />}
+      />
 
       <Separator orientation="vertical" className="mx-1 h-4!" />
 
-      <ToolbarButton label="Toggle grid" onClick={onToggleGrid} active={showGrid}>
-        <Grid3x3 />
-      </ToolbarButton>
-      <ToolbarButton label="Auto layout (coming soon)" disabled onClick={() => undefined}>
-        <LayoutGrid />
-      </ToolbarButton>
+      <ToolbarButton
+        label="Toggle grid"
+        onClick={onToggleGrid}
+        active={showGrid}
+        icon={<Grid3x3 />}
+      />
+      <ToolbarButton
+        label="Auto layout (coming soon)"
+        disabled
+        onClick={() => undefined}
+        icon={<LayoutGrid />}
+      />
     </Panel>
   );
 }

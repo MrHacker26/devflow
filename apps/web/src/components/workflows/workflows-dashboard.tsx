@@ -208,11 +208,10 @@ export function WorkflowsDashboard() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        icon={<MoreHorizontal />}
                         className="relative z-10"
                         aria-label={`Actions for ${workflow.name}`}
-                      >
-                        <MoreHorizontal />
-                      </Button>
+                      />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem asChild>

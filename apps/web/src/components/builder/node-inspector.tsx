@@ -255,11 +255,10 @@ export function NodeInspector({
             type="button"
             variant="ghost"
             size="icon-sm"
+            icon={<PanelRightClose className="rotate-180" />}
             aria-label="Expand panel"
             onClick={onToggleCollapsed}
-          >
-            <PanelRightClose className="rotate-180" />
-          </Button>
+          />
         </WithTooltip>
       </aside>
     );
@@ -305,11 +304,10 @@ export function NodeInspector({
             type="button"
             variant="ghost"
             size="icon-sm"
+            icon={<PanelRightClose />}
             aria-label="Collapse panel"
             onClick={onToggleCollapsed}
-          >
-            <PanelRightClose />
-          </Button>
+          />
         </WithTooltip>
       </div>
 
@@ -369,12 +367,11 @@ function InspectorForm({
               type="button"
               variant="ghost"
               size="icon-sm"
+              icon={<Trash2 />}
               className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               onClick={() => onDelete(node.id)}
               aria-label="Delete node"
-            >
-              <Trash2 />
-            </Button>
+            />
           </WithTooltip>
         ) : null}
       </div>
@@ -613,9 +610,14 @@ export function PaletteCollapseButton({
   const label = collapsed ? 'Expand node palette' : 'Collapse node palette';
   return (
     <WithTooltip label={label} side="right">
-      <Button type="button" variant="ghost" size="icon-sm" aria-label={label} onClick={onToggle}>
-        <PanelLeftClose className={collapsed ? 'rotate-180' : undefined} />
-      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        icon={<PanelLeftClose className={collapsed ? 'rotate-180' : undefined} />}
+        aria-label={label}
+        onClick={onToggle}
+      />
     </WithTooltip>
   );
 }
