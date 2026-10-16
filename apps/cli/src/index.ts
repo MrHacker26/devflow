@@ -1,22 +1,27 @@
 #!/usr/bin/env bun
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 
 import { cancel, intro, log, outro } from '@clack/prompts';
-import { workflowSchema } from '@devflow/shared';
+import { workflowSchema, type Workflow } from '@devflow/shared';
 
 import { planWorkflow, type PlanStep } from './plan';
 import { executePlan, runShell } from './run';
+import { fetchSharedWorkflow, isShareToken } from './share';
 
 const usage = `DevFlow CLI
 
 Usage:
   devflow run <workflow.json>
+  devflow run <share-token>
   devflow run <workflow.json> --dry-run
 
 Options:
   --dry-run   Print the happy path without running commands
   -h, --help  Show this help
+
+A share token looks like df_... and is fetched from DEVFLOW_URL
+(default http://localhost:3000).
 `;
 
 async function main() {
@@ -42,43 +47,26 @@ async function main() {
     return;
   }
 
-  const [command, file] = positionals;
+  const [command, target] = positionals;
   if (help || positionals.length === 0) {
     console.log(usage);
     return;
   }
 
-  if (command !== 'run' || !file || positionals.length > 2) {
+  if (command !== 'run' || !target || positionals.length > 2) {
     fail(`Unknown command.\n\n${usage}`);
     return;
   }
 
-  let raw: string;
+  let workflow: Workflow;
   try {
-    raw = await readFile(file, 'utf8');
+    workflow = await loadWorkflow(target);
   } catch (error) {
-    const code = error instanceof Error && 'code' in error ? error.code : undefined;
-    fail(code === 'ENOENT' ? `Workflow file not found: ${file}` : `Could not read ${file}.`);
+    fail(error instanceof Error ? error.message : 'Could not load the workflow.');
     return;
   }
 
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    fail(`${file} is not valid JSON.`);
-    return;
-  }
-
-  const parsed = workflowSchema.safeParse(json);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    const path = issue?.path.join('.') || 'workflow';
-    fail(`Invalid workflow at ${path}: ${issue?.message ?? 'unknown error'}`);
-    return;
-  }
-
-  const plan = planWorkflow(parsed.data);
+  const plan = planWorkflow(workflow);
   if (!plan.ok) {
     fail(plan.message);
     return;
@@ -101,6 +89,46 @@ async function main() {
     return;
   }
   outro('Done.');
+}
+
+async function loadWorkflow(target: string): Promise<Workflow> {
+  if (isShareToken(target) && !(await fileExists(target))) {
+    return fetchSharedWorkflow(target);
+  }
+
+  let raw: string;
+  try {
+    raw = await readFile(target, 'utf8');
+  } catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : undefined;
+    throw new Error(
+      code === 'ENOENT' ? `Workflow file not found: ${target}` : `Could not read ${target}.`,
+    );
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error(`${target} is not valid JSON.`);
+  }
+
+  const parsed = workflowSchema.safeParse(json);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue?.path.join('.') || 'workflow';
+    throw new Error(`Invalid workflow at ${path}: ${issue?.message ?? 'unknown error'}`);
+  }
+  return parsed.data;
+}
+
+async function fileExists(target: string) {
+  try {
+    await stat(target);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function printStep(step: PlanStep) {

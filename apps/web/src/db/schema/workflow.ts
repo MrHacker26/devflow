@@ -17,6 +17,7 @@ export const workflows = pgTable(
     nodes: jsonb('nodes').$type<FlowNode[]>().notNull().default([]),
     edges: jsonb('edges').$type<FlowEdge[]>().notNull().default([]),
     layout: jsonb('layout').$type<WorkflowLayout>().notNull().default({}),
+    shareToken: text('share_token').unique(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()

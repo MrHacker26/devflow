@@ -178,3 +178,10 @@ export const workflowSaveInputSchema = workflowSchema.omit({ id: true }).extend(
   id: z.string().optional(), // absent = create new, present = update
 });
 export type WorkflowSaveInput = z.infer<typeof workflowSaveInputSchema>;
+
+/** Unlisted run link. Not the workflow id, which appears in the builder URL. */
+export const shareTokenSchema = z.string().regex(/^df_[A-Za-z0-9_-]{22}$/);
+
+export function isShareToken(value: string): boolean {
+  return shareTokenSchema.safeParse(value).success;
+}
