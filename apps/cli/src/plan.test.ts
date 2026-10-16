@@ -122,13 +122,36 @@ describe('planWorkflow', () => {
     expect(plan.steps.map((step) => step.id)).toEqual(['start', 'ok', 'end']);
   });
 
-  test('rejects prompt, if, sshKey, and env on the path', () => {
+  test('keeps a prompt on the path and records its variable', () => {
+    const plan = planWorkflow(
+      workflow({
+        nodes: [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'ask',
+            type: 'prompt',
+            data: {
+              label: 'GitHub email',
+              question: 'What email should we use?',
+              variableName: 'gitEmail',
+            },
+          },
+        ],
+        edges: [{ id: 'e1', source: 'start', target: 'ask', condition: 'always' }],
+      }),
+    );
+
+    expect(plan.ok).toBe(true);
+    if (!plan.ok) return;
+    expect(plan.steps[1]?.prompt).toEqual({
+      question: 'What email should we use?',
+      variableName: 'gitEmail',
+    });
+    expect(plan.steps[1]?.command).toBeNull();
+  });
+
+  test('rejects if, sshKey, and env on the path', () => {
     for (const node of [
-      {
-        id: 'ask',
-        type: 'prompt' as const,
-        data: { label: 'Email', question: 'Email?', variableName: 'email' },
-      },
       { id: 'branch', type: 'if' as const, data: { label: 'Node?', condition: 'command -v node' } },
       {
         id: 'key',

@@ -38,6 +38,7 @@ import { loginHref } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
 import { BuilderSettingsPopover, type BuilderPreferences } from './builder-settings';
+import { ShareWorkflowButton } from './share-workflow-button';
 import { ValidationBadge } from './workflow-summary';
 import type { ValidationStatus } from './workflow-validation';
 
@@ -52,6 +53,8 @@ export function BuilderToolbar({
   saveStatus,
   saveError,
   workflowId,
+  shareToken,
+  onShareTokenChange,
   validationStatus,
   onPreviewExecution,
   onSimulate,
@@ -71,6 +74,8 @@ export function BuilderToolbar({
   saveStatus: SaveStatus;
   saveError: string | null;
   workflowId: string | null;
+  shareToken: string | null;
+  onShareTokenChange: (token: string | null) => void;
   validationStatus: ValidationStatus;
   onPreviewExecution: () => void;
   onSimulate: () => void;
@@ -217,6 +222,12 @@ export function BuilderToolbar({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <ShareWorkflowButton
+            workflowId={workflowId}
+            shareToken={shareToken}
+            onShareTokenChange={onShareTokenChange}
+          />
 
           <WithTooltip label={isSaving ? 'Saving…' : 'Save (⌘S)'}>
             <Button size="sm" onClick={onSave} disabled={isSaving || !name.trim()} className="ml-1">

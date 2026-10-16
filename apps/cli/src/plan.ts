@@ -13,6 +13,7 @@ export type PlanStep = {
   expectedExitCode: number | null;
   failureMessage: string | null;
   skipIfCommand: string | null;
+  prompt: { question: string; variableName: string } | null;
 };
 
 export type PlanResult =
@@ -25,6 +26,7 @@ const supported = new Set<FlowNode['type']>([
   'gitClone',
   'verify',
   'wait',
+  'prompt',
   'end',
 ]);
 
@@ -60,7 +62,7 @@ export function planWorkflow(
     if (!supported.has(current.type)) {
       return {
         ok: false,
-        message: `"${current.data.label}" (${current.type}) is not supported yet. This version runs start, command, install, gitClone, verify, wait, and end.`,
+        message: `"${current.data.label}" (${current.type}) is not supported yet. This version runs start, command, install, gitClone, verify, wait, prompt, and end.`,
       };
     }
 
@@ -171,9 +173,22 @@ function stepFor(
         step: step(node, `sleep ${node.data.seconds}`, null, { expectedExitCode: 0 }),
       };
     }
+    case 'prompt': {
+      const question = node.data.question.trim();
+      const variableName = node.data.variableName.trim();
+      if (!question) return { ok: false, message: `"${node.data.label}" has an empty question.` };
+      if (!variableName) {
+        return { ok: false, message: `"${node.data.label}" has an empty variable name.` };
+      }
+      return {
+        ok: true,
+        step: step(node, null, `${question}\n{{${variableName}}}`, {
+          prompt: { question, variableName },
+        }),
+      };
+    }
     case 'sshKey':
     case 'env':
-    case 'prompt':
     case 'if':
       return {
         ok: false,
@@ -220,6 +235,7 @@ function step(
     expectedExitCode?: number | null;
     failureMessage?: string | null;
     skipIfCommand?: string | null;
+    prompt?: { question: string; variableName: string } | null;
   } = {},
 ): PlanStep {
   return {
@@ -233,6 +249,7 @@ function step(
     expectedExitCode: extra.expectedExitCode ?? null,
     failureMessage: extra.failureMessage ?? null,
     skipIfCommand: extra.skipIfCommand ?? null,
+    prompt: extra.prompt ?? null,
   };
 }
 

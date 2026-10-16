@@ -45,8 +45,11 @@ From the repo root:
 ```sh
 bun apps/cli/src/index.ts run apps/cli/examples/toolchain.json --dry-run
 bun apps/cli/src/index.ts run ./workflow.json
+bun apps/cli/src/index.ts run df_...
 ```
 
-This follows the happy path (`always`, then `on-success`). A `skipIfCommand` that exits 0 skips that step. `prompt`, `if`, `sshKey`, `env`, and steps that require sudo stop the run. `--dry-run` prints the commands, including `skip if`, without executing them.
+Share a saved workflow from the builder. That command fetches it from `DEVFLOW_URL` (default `http://localhost:3000`) without an account. Revoke the link to stop access. The workflow id in the dashboard URL is not a share link.
+
+This follows the happy path (`always`, then `on-success`). A `skipIfCommand` that exits 0 skips that step. A `prompt` asks a question and fills `{{variable}}` in later commands. `if`, `sshKey`, `env`, and steps that require sudo stop the run. `--dry-run` prints the commands, including `skip if` and prompt questions, without executing them.
 
 More details: [`apps/web/README.md`](apps/web/README.md) and [`packages/shared/README.md`](packages/shared/README.md).

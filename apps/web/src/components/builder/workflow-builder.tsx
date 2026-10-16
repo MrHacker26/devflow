@@ -120,6 +120,7 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
   const [name, setName] = useState('Untitled workflow');
   const [description, setDescription] = useState('');
   const [workflowId, setWorkflowId] = useState<string | null>(initialWorkflowId ?? null);
+  const [shareToken, setShareToken] = useState<string | null>(null);
   const [version, setVersion] = useState(1);
   const [lastSavedAt, setLastSavedAt] = useState<Date | string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -210,6 +211,7 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
     setName(loaded.name);
     setDescription(loaded.description ?? '');
     setWorkflowId(loaded.id);
+    setShareToken(loaded.shareToken);
     setVersion(loaded.version);
     setLastSavedAt(loaded.updatedAt);
     setBaseline(
@@ -634,6 +636,8 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                 saveStatus={resolvedSaveStatus}
                 saveError={saveError}
                 workflowId={workflowId}
+                shareToken={shareToken}
+                onShareTokenChange={setShareToken}
                 validationStatus={validation.status}
                 onPreviewExecution={() => setPreviewOpen(true)}
                 onSimulate={startSimulation}
@@ -643,6 +647,7 @@ export function WorkflowBuilder({ workflowId: initialWorkflowId }: { workflowId?
                 onExportJson={exportJson}
                 onDuplicateWorkflow={() => {
                   setWorkflowId(null);
+                  setShareToken(null);
                   setName((current) =>
                     current.endsWith(' (copy)') ? current : `${current} (copy)`,
                   );

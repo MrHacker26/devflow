@@ -4,8 +4,10 @@ import { createTRPCRouter, protectedProcedure } from '@/trpc/init';
 
 import {
   deleteWorkflow,
+  enableShare,
   getWorkflowById,
   listWorkflows,
+  revokeShare,
   saveWorkflow,
   workflowIdSchema,
 } from './workflow.service';
@@ -26,4 +28,12 @@ export const workflowRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(workflowIdSchema)
     .mutation(({ ctx, input }) => deleteWorkflow(ctx.user.id, input.id)),
+
+  share: protectedProcedure
+    .input(workflowIdSchema)
+    .mutation(({ ctx, input }) => enableShare(ctx.user.id, input.id)),
+
+  revokeShare: protectedProcedure
+    .input(workflowIdSchema)
+    .mutation(({ ctx, input }) => revokeShare(ctx.user.id, input.id)),
 });

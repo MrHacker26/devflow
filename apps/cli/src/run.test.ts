@@ -267,6 +267,98 @@ describe('executePlan', () => {
 
     expect(calls).toEqual([]);
   });
+
+  test('fills a prompt answer into the next command', async () => {
+    const calls: string[] = [];
+    const result = await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'ask',
+            type: 'prompt',
+            data: { label: 'Email', question: 'Email?', variableName: 'gitEmail' },
+          },
+          {
+            id: 'echo',
+            type: 'command',
+            data: { label: 'Use email', command: 'echo {{gitEmail}}', platform: 'all' },
+          },
+        ],
+        [
+          { id: 'e1', source: 'start', target: 'ask', condition: 'always' },
+          { id: 'e2', source: 'ask', target: 'echo', condition: 'always' },
+        ],
+      ),
+      async (command) => {
+        calls.push(command);
+        return ok();
+      },
+      {
+        onPrompt: async () => ({ ok: true, value: 'dev@example.com' }),
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(calls).toEqual(['echo dev@example.com']);
+  });
+
+  test('stops when a prompt is cancelled', async () => {
+    const calls: string[] = [];
+    const result = await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'ask',
+            type: 'prompt',
+            data: { label: 'Email', question: 'Email?', variableName: 'gitEmail' },
+          },
+          {
+            id: 'echo',
+            type: 'command',
+            data: { label: 'Use email', command: 'echo {{gitEmail}}', platform: 'all' },
+          },
+        ],
+        [
+          { id: 'e1', source: 'start', target: 'ask', condition: 'always' },
+          { id: 'e2', source: 'ask', target: 'echo', condition: 'always' },
+        ],
+      ),
+      async (command) => {
+        calls.push(command);
+        return ok();
+      },
+      { onPrompt: async () => ({ ok: false, message: 'Prompt cancelled.' }) },
+    );
+
+    expect(calls).toEqual([]);
+    expect(result).toMatchObject({ ok: false, message: 'Prompt cancelled.' });
+  });
+
+  test('does not run a command that still has an unset variable', async () => {
+    let calls = 0;
+    const result = await executePlan(
+      planned(
+        [
+          { id: 'start', type: 'start', data: { label: 'Start' } },
+          {
+            id: 'echo',
+            type: 'command',
+            data: { label: 'Use email', command: 'echo {{gitEmail}}', platform: 'all' },
+          },
+        ],
+        [{ id: 'e1', source: 'start', target: 'echo', condition: 'always' }],
+      ),
+      async () => {
+        calls += 1;
+        return ok();
+      },
+    );
+
+    expect(calls).toBe(0);
+    expect(result).toMatchObject({ ok: false, message: 'Variable "gitEmail" is not set.' });
+  });
 });
 
 describe('runShell', () => {

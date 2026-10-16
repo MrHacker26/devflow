@@ -1,22 +1,27 @@
 #!/usr/bin/env bun
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 
-import { cancel, intro, log, outro } from '@clack/prompts';
-import { workflowSchema } from '@devflow/shared';
+import { cancel, intro, isCancel, log, outro, text } from '@clack/prompts';
+import { workflowSchema, type Workflow } from '@devflow/shared';
 
 import { planWorkflow, type PlanStep } from './plan';
 import { executePlan, runShell } from './run';
+import { fetchSharedWorkflow, isShareToken } from './share';
 
 const usage = `DevFlow CLI
 
 Usage:
   devflow run <workflow.json>
+  devflow run <share-token>
   devflow run <workflow.json> --dry-run
 
 Options:
   --dry-run   Print the happy path without running commands
   -h, --help  Show this help
+
+A share token looks like df_... and is fetched from DEVFLOW_URL
+(default http://localhost:3000).
 `;
 
 async function main() {
@@ -42,43 +47,26 @@ async function main() {
     return;
   }
 
-  const [command, file] = positionals;
+  const [command, target] = positionals;
   if (help || positionals.length === 0) {
     console.log(usage);
     return;
   }
 
-  if (command !== 'run' || !file || positionals.length > 2) {
+  if (command !== 'run' || !target || positionals.length > 2) {
     fail(`Unknown command.\n\n${usage}`);
     return;
   }
 
-  let raw: string;
+  let workflow: Workflow;
   try {
-    raw = await readFile(file, 'utf8');
+    workflow = await loadWorkflow(target);
   } catch (error) {
-    const code = error instanceof Error && 'code' in error ? error.code : undefined;
-    fail(code === 'ENOENT' ? `Workflow file not found: ${file}` : `Could not read ${file}.`);
+    fail(error instanceof Error ? error.message : 'Could not load the workflow.');
     return;
   }
 
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    fail(`${file} is not valid JSON.`);
-    return;
-  }
-
-  const parsed = workflowSchema.safeParse(json);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    const path = issue?.path.join('.') || 'workflow';
-    fail(`Invalid workflow at ${path}: ${issue?.message ?? 'unknown error'}`);
-    return;
-  }
-
-  const plan = planWorkflow(parsed.data);
+  const plan = planWorkflow(workflow);
   if (!plan.ok) {
     fail(plan.message);
     return;
@@ -91,11 +79,16 @@ async function main() {
     return;
   }
 
-  const result = await executePlan(plan.steps, (command, options) => runShell(command, options), {
-    onMarker: (step) => log.info(step.label),
-    onSkip: printStep,
-    onStart: printStep,
-  });
+  const result = await executePlan(
+    plan.steps,
+    (shellCommand, options) => runShell(shellCommand, options),
+    {
+      onMarker: (step) => log.info(step.label),
+      onSkip: printStep,
+      onStart: printStep,
+      onPrompt: ask,
+    },
+  );
   if (!result.ok) {
     fail(result.message);
     return;
@@ -103,7 +96,65 @@ async function main() {
   outro('Done.');
 }
 
+async function loadWorkflow(target: string): Promise<Workflow> {
+  if (isShareToken(target) && !(await fileExists(target))) {
+    return fetchSharedWorkflow(target);
+  }
+
+  let raw: string;
+  try {
+    raw = await readFile(target, 'utf8');
+  } catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : undefined;
+    throw new Error(
+      code === 'ENOENT' ? `Workflow file not found: ${target}` : `Could not read ${target}.`,
+    );
+  }
+
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error(`${target} is not valid JSON.`);
+  }
+
+  const parsed = workflowSchema.safeParse(json);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue?.path.join('.') || 'workflow';
+    throw new Error(`Invalid workflow at ${path}: ${issue?.message ?? 'unknown error'}`);
+  }
+  return parsed.data;
+}
+
+async function fileExists(target: string) {
+  try {
+    await stat(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function ask(step: PlanStep) {
+  const question = step.prompt?.question;
+  if (!question) return { ok: false as const, message: `"${step.label}" needs an answer.` };
+
+  const answer = await text({
+    message: question,
+    validate: (value) => (value?.trim() ? undefined : 'Enter a value.'),
+  });
+  if (isCancel(answer)) return { ok: false as const, message: 'Prompt cancelled.' };
+
+  log.info(`${step.label}: ${answer.trim()}`);
+  return { ok: true as const, value: answer.trim() };
+}
+
 function printStep(step: PlanStep) {
+  if (step.prompt) {
+    log.step(`${step.label}\n${step.note}`);
+    return;
+  }
   if (!step.command) {
     log.info(step.label);
     return;
