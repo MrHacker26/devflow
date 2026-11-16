@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { Check, Link2, LoaderCircle } from 'lucide-react';
+import { Check, Link2 } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -62,7 +62,6 @@ export function ShareWorkflowButton({
   );
 
   const command = shareToken ? `devflow run ${shareToken}` : '';
-  const pending = share.isPending || revoke.isPending;
 
   async function copyCommand() {
     if (!command) return;
@@ -78,13 +77,13 @@ export function ShareWorkflowButton({
           <Button
             variant="outline"
             size="sm"
+            icon={<Link2 />}
             disabled={Boolean(disabledReason)}
             onClick={() => {
               setError(null);
               setOpen(true);
             }}
           >
-            <Link2 data-icon="inline-start" />
             Share
           </Button>
         </span>
@@ -104,8 +103,12 @@ export function ShareWorkflowButton({
             <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <Input readOnly value={command} aria-label="Share command" className="font-mono" />
-                <Button type="button" variant="outline" onClick={() => void copyCommand()}>
-                  {copied ? <Check data-icon="inline-start" /> : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  icon={copied ? <Check /> : undefined}
+                  onClick={() => void copyCommand()}
+                >
                   {copied ? 'Copied' : 'Copy'}
                 </Button>
               </div>
@@ -117,14 +120,12 @@ export function ShareWorkflowButton({
           ) : (
             <Button
               type="button"
-              disabled={!workflowId || pending}
+              disabled={!workflowId}
+              loading={share.isPending}
               onClick={() => {
                 if (workflowId) share.mutate({ id: workflowId });
               }}
             >
-              {share.isPending ? (
-                <LoaderCircle data-icon="inline-start" className="animate-spin" />
-              ) : null}
               Create link
             </Button>
           )}
@@ -136,14 +137,12 @@ export function ShareWorkflowButton({
               <Button
                 type="button"
                 variant="destructive"
-                disabled={pending}
+                disabled={share.isPending}
+                loading={revoke.isPending}
                 onClick={() => {
                   if (workflowId) revoke.mutate({ id: workflowId });
                 }}
               >
-                {revoke.isPending ? (
-                  <LoaderCircle data-icon="inline-start" className="animate-spin" />
-                ) : null}
                 Revoke link
               </Button>
             ) : null}

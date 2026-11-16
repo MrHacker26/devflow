@@ -159,22 +159,20 @@ export function BuilderToolbar({
             <Button
               variant="ghost"
               size="icon-sm"
+              icon={<Play />}
               onClick={onPreviewExecution}
               aria-label="Preview"
-            >
-              <Play />
-            </Button>
+            />
           </WithTooltip>
           <WithTooltip label={isSimulating ? 'Simulating…' : 'Simulate run'}>
             <Button
               variant="ghost"
               size="icon-sm"
+              icon={<Sparkles />}
               onClick={onSimulate}
-              disabled={isSimulating}
+              loading={isSimulating}
               aria-label={isSimulating ? 'Simulating' : 'Simulate'}
-            >
-              <Sparkles />
-            </Button>
+            />
           </WithTooltip>
 
           <BuilderSettingsPopover value={preferences} onChange={onPreferencesChange} />
@@ -182,9 +180,12 @@ export function BuilderToolbar({
           <DropdownMenu>
             <WithTooltip label="More actions">
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="More actions">
-                  <MoreHorizontal />
-                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  icon={<MoreHorizontal />}
+                  aria-label="More actions"
+                />
               </DropdownMenuTrigger>
             </WithTooltip>
             <DropdownMenuContent align="end" className="z-[1100] w-52">
@@ -230,8 +231,13 @@ export function BuilderToolbar({
           />
 
           <WithTooltip label={isSaving ? 'Saving…' : 'Save (⌘S)'}>
-            <Button size="sm" onClick={onSave} disabled={isSaving || !name.trim()} className="ml-1">
-              {isSaving ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : null}
+            <Button
+              size="sm"
+              onClick={onSave}
+              disabled={!name.trim()}
+              loading={isSaving}
+              className="ml-1"
+            >
               Save
             </Button>
           </WithTooltip>

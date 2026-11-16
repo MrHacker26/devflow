@@ -52,9 +52,13 @@ export function BuilderSettingsPopover({
     <DropdownMenu>
       <WithTooltip label="Settings">
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="ghost" size="icon-sm" aria-label="Builder settings">
-            <Settings2 />
-          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            icon={<Settings2 />}
+            aria-label="Builder settings"
+          />
         </DropdownMenuTrigger>
       </WithTooltip>
       <DropdownMenuContent align="end" className="z-[1100] w-56">

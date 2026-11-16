@@ -1,6 +1,5 @@
 'use client';
 
-import { LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -113,8 +112,7 @@ function LoginForm() {
               />
               {error ? <FieldError>{error}</FieldError> : null}
             </Field>
-            <Button type="submit" disabled={pending} size="lg" className="mt-2 w-full">
-              {pending ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : null}
+            <Button type="submit" loading={pending} size="lg" className="mt-2 w-full">
               {isSignIn ? 'Sign in' : 'Create account'}
             </Button>
           </FieldGroup>

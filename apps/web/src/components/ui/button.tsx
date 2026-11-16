@@ -1,7 +1,8 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
+import * as React from 'react';
 
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
@@ -39,17 +40,43 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
+type ButtonIcon = React.ReactElement<{
+  className?: string;
+  'data-icon'?: 'inline-start' | 'inline-end';
+}>;
+
+type ButtonProps<AsChild extends boolean = false> = React.ComponentProps<'button'> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: AsChild;
+  } & (AsChild extends true
+    ? { icon?: never; loading?: never; iconPlacement?: never }
+    : {
+        icon?: ButtonIcon;
+        loading?: boolean;
+        iconPlacement?: 'before-label' | 'after-label';
+      });
+
+function Button<AsChild extends boolean = false>({
   className,
   variant = 'default',
   size = 'default',
-  asChild = false,
+  asChild = false as AsChild,
+  icon,
+  loading,
+  iconPlacement,
+  children,
+  disabled,
   ...props
-}: React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
+}: ButtonProps<AsChild>) {
+  if (asChild && (icon !== undefined || loading !== undefined || iconPlacement !== undefined)) {
+    throw new Error(
+      'Button does not support `icon`, `loading`, or `iconPlacement` when `asChild` is set.',
+    );
+  }
+
   const Comp = asChild ? Slot.Root : 'button';
+  const isLoading = loading === true;
+  const placement = iconPlacement ?? 'before-label';
 
   return (
     <Comp
@@ -58,8 +85,44 @@ function Button({
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+      disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
+    >
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {isLoading ? (
+            <Spinner className={iconClassName(size)} data-icon="inline-start" />
+          ) : (
+            icon && placement === 'before-label' && cloneButtonIcon(icon, size, 'inline-start')
+          )}
+          {children}
+          {!isLoading &&
+            icon &&
+            placement === 'after-label' &&
+            cloneButtonIcon(icon, size, 'inline-end')}
+        </>
+      )}
+    </Comp>
   );
+}
+
+function iconClassName(size: VariantProps<typeof buttonVariants>['size']) {
+  if (size === 'xs' || size === 'icon-xs') return 'size-3';
+  if (size === 'sm' || size === 'icon-sm') return 'size-3.5';
+  return 'size-4';
+}
+
+function cloneButtonIcon(
+  icon: ButtonIcon,
+  size: VariantProps<typeof buttonVariants>['size'],
+  dataIcon: 'inline-start' | 'inline-end',
+) {
+  return React.cloneElement(icon, {
+    className: cn(iconClassName(size), icon.props.className),
+    'data-icon': dataIcon,
+  });
 }
 
 export { Button, buttonVariants };
